@@ -14,7 +14,7 @@ This project is designed to simulate a real-world e-commerce application with:
 
 ## 📐 Service Categories & Dependency Order
 
-### 🟢 1. Foundational Infrastructure (Telemetry, Messaging, Storage)
+### 1. Foundational Infrastructure (Telemetry, Messaging, Storage)
 
 These services must start first as they support metrics, logs, traces, and messaging.
 
@@ -30,7 +30,7 @@ These services must start first as they support metrics, logs, traces, and messa
 
 ---
 
-### 🟡 2. Feature Flag Services
+### 2. Feature Flag Services
 
 | Service     | Purpose                             |
 |-------------|-------------------------------------|
@@ -39,7 +39,7 @@ These services must start first as they support metrics, logs, traces, and messa
 
 ---
 
-### 🔵 3. Core Backend Microservices (Business Logic)
+### 3. Core Backend Microservices (Business Logic)
 
 | Service             | Role                                       | Dependencies    |
 |---------------------|--------------------------------------------|-----------------|
@@ -58,7 +58,7 @@ These services must start first as they support metrics, logs, traces, and messa
 
 ---
 
-### 🟣 4. Orchestration Services
+### 4. Orchestration Services
 
 | Service          | Description                                  |
 |------------------|----------------------------------------------|
@@ -67,7 +67,7 @@ These services must start first as they support metrics, logs, traces, and messa
 
 ---
 
-### 🔶 5. Frontend Services (UI Layer)
+### 5. Frontend Services (UI Layer)
 
 | Service           | Description                                 |
 |-------------------|---------------------------------------------|
@@ -79,7 +79,7 @@ These services must start first as they support metrics, logs, traces, and messa
 
 ---
 
-### 🔺 6. Load Testing Services
+### 6. Load Testing Services
 
 | Service           | Description                                 |
 |-------------------|---------------------------------------------|
@@ -88,7 +88,7 @@ These services must start first as they support metrics, logs, traces, and messa
 
 ---
 
-## 🧪 Observability Stack
+## Observability Stack
 
 - **Traces**: Jaeger via OTel Collector
 - **Logs**: OpenSearch
