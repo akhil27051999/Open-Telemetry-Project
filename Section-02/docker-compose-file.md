@@ -9,20 +9,20 @@ x-default-logging: &logging
 ```
 
 #### x-default-logging: 
-This is an anchor (YAML extension) defining a reusable block named logging.
+* This is an anchor (YAML extension) defining a reusable block named logging.
 
 #### &logging
-Declares an anchor reference, allowing you to reuse this block elsewhere using *logging.
+* Declares an anchor reference, allowing you to reuse this block elsewhere using *logging.
 
 #### driver: "json-file" 
-Specifies the Docker logging driver. json-file is the default, storing logs in JSON format.
+* Specifies the Docker logging driver. json-file is the default, storing logs in JSON format.
 
 #### options: 
-Custom options for the logging driver:
+* Custom options for the logging driver:
 
-`max-size: "5m"` – log files will rotate when they reach 5 megabytes.
-`max-file: "2" ` – keeps only the 2 most recent rotated logs.
-`tag: "{{.Name}}" ` – log tag uses container name dynamically ({{.Name}} is a Docker log template).
+- `max-size: "5m"` – log files will rotate when they reach 5 megabytes.
+- `max-file: "2" ` – keeps only the 2 most recent rotated logs.
+- `tag: "{{.Name}}" ` – log tag uses container name dynamically ({{.Name}} is a Docker log template).
 
 🌐 Network Definition
 yaml
