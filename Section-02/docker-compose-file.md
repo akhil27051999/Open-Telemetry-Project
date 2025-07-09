@@ -18,7 +18,7 @@ x-default-logging: &logging
   - `max-file: "2" ` – keeps only the 2 most recent rotated logs.
   - `tag: "{{.Name}}" ` – log tag uses container name dynamically ({{.Name}} is a Docker log template).
 
-## 🌐 Networking 
+## 🌐 Networking
 
 ```yaml
 networks:
@@ -26,6 +26,8 @@ networks:
     name: opentelemetry-demo
     driver: bridge
 ```
+
+## 🧱 Core Services
 
 - Defines a network named opentelemetry-demo using the bridge driver.
 - `default: ` - whcih means this network will be the default one for all services unless another is specified.
