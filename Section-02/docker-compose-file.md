@@ -1,4 +1,4 @@
-# 📦 Docker Compose to Test Services Locally
+# 📦 Docker Compose File Explaination To Test Services Locally
 
 ## 🔁 Global Logging Configuration
 ```yaml
