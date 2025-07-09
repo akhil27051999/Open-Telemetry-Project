@@ -10,8 +10,6 @@ This project is designed to simulate a real-world e-commerce application with:
 - Orchestration layer
 - UI and load testing tools
 
----
-
 ## 📐 Service Categories & Dependency Order
 
 ### 1. Foundational Infrastructure (Telemetry, Messaging, Storage)
