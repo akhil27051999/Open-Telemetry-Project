@@ -3,13 +3,13 @@
 ## 📐 Service-to-Service flow in cronological order
 
 ### 1. Foundational Infrastructure 
-1. 'OpenSearch' starts first to store logs and traces that will be sent from OpenTelemetry Collector.
-2. 'Jaeger' starts next as it will be used by OpenTelemetry Collector to visualize distributed traces.
-3. 'Prometheus' begins to scrape metrics from services and store time-series data.
-4. 'Grafana' starts and connects to Prometheus and OpenSearch to visualize logs, metrics, and traces.
-5. 'OpenTelemetry' Collector then starts and becomes the central point where all services send traces, logs, and metrics.
-6. 'Kafka' boots up to act as the messaging queue between checkout → accounting and fraud detection services.
-7. 'Valkey' (Redis) starts to serve as the fast in-memory database for the Cart Service.
+1. `OpenSearch'`starts first to store logs and traces that will be sent from OpenTelemetry Collector.
+2. `Jaeger` starts next as it will be used by OpenTelemetry Collector to visualize distributed traces.
+3. `Prometheus` begins to scrape metrics from services and store time-series data.
+4. `Grafana` starts and connects to Prometheus and OpenSearch to visualize logs, metrics, and traces.
+5. `OpenTelemetry` Collector then starts and becomes the central point where all services send traces, logs, and metrics.
+6. `Kafka` boots up to act as the messaging queue between checkout → accounting and fraud detection services.
+7. `Valkey` (Redis) starts to serve as the fast in-memory database for the Cart Service.
 
 | Service         | Purpose                                      |
 |----------------|----------------------------------------------|
