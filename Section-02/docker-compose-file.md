@@ -27,10 +27,10 @@ networks:
     driver: bridge
 ```
 
-## 🧱 Core Services
-
 - Defines a network named opentelemetry-demo using the bridge driver.
 - `default: ` - whcih means this network will be the default one for all services unless another is specified.
+
+## 🧱 Core Services
 
 ### 📦 Accounting Service
 
