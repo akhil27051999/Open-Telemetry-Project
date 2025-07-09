@@ -1,3 +1,5 @@
+# 📦 Docker Compose to Test Services Locally
+
 ## 🔁 Global Logging Configuration
 ```yaml
 x-default-logging: &logging
