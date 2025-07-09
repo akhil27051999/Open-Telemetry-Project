@@ -10,6 +10,7 @@ OpenTelemetry Demo is composed of microservices written in different programming
 
 ![Screenshot 2025-07-07 163956](https://github.com/user-attachments/assets/b93aa7ee-7735-405b-a44c-1e379e7265e7)
 
+
 ## 📦 OpenTelemetry Microservices Overview
 
 | **Service**         | **Language**        | **Description**                                                                                      |
