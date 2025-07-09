@@ -1,6 +1,6 @@
 # 🛰️ OpenTelemetry Project Service to Service Flow
 
-### 1. Foundational Infrastructure 
+## 1. Foundational Infrastructure 
 1. `OpenSearch` starts first to store logs and traces that will be sent from OpenTelemetry Collector.
 2. `Jaeger` starts next as it will be used by OpenTelemetry Collector to visualize distributed traces.
 3. `Prometheus` begins to scrape metrics from services and store time-series data.
@@ -19,9 +19,8 @@
 | **Kafka**       | Messaging bus (used by Checkout, Fraud, etc.)|
 | **Valkey (Redis)** | Cart service backend cache                |
 
----
 
-### 2. Feature Flag Services
+## 2. Feature Flag Services
 
 1. `flagd` starts and listens for feature flag evaluations requested by various services.
 2. `flagd-ui` is brought up to allow UI-based configuration of the flags used by flagd.
@@ -31,9 +30,9 @@
 | **flagd**   | Feature flag evaluation engine      |
 | **flagd-ui**| Web UI for managing feature flags   |
 
----
 
-### 3. Core Backend Microservices (Business Logic)
+
+## 3. Core Backend Microservices (Business Logic)
 
 1. `Currency Service` starts to provide currency conversion during checkout.
 2. `Quote Service` starts to offer shipping cost estimations.
@@ -63,9 +62,9 @@
 | Accounting           | Order ledger storage (mocked)              | Kafka           |
 | Shipping Service     | Calculates shipping cost                   | Quote Service   |
 
----
 
-### 4. Orchestration Services
+
+## 4. Orchestration Services
 
 1. `Checkout Service` starts now that all its dependencies (cart, currency, payment, shipping, email, product catalog, kafka, flagd) are ready.
    - It coordinates the end-to-end flow when a user clicks on "Checkout", calling all necessary services to place the order.
@@ -75,9 +74,9 @@
 | **Checkout**     | Central service that coordinates orders       |
 |                  | Depends on: cart, payment, currency, shipping, email, product-catalog, kafka, flagd |
 
----
 
-### 5. Frontend Services (UI Layer)
+
+## 5. Frontend Services (UI Layer)
 
 1. `Frontend service` starts to provide the user-facing UI. It communicates with:
    - Ad Service for product ads
@@ -100,9 +99,9 @@
 |                   | Depends on: frontend, jaeger, grafana, load-generator, flagd-ui |
 | **React Native App** | Mobile version (optional)                |
 
----
 
-### 6. Load Testing Services
+
+## 6. Load Testing Services
 
 1. `Load Generator` starts last to simulate user traffic to the frontend.
    It performs automated UI interactions (viewing products, adding to cart, placing orders) to test the system under load.
