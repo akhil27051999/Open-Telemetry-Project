@@ -16,7 +16,7 @@ x-default-logging: &logging
   - `max-file: "2" ` – keeps only the 2 most recent rotated logs.
   - `tag: "{{.Name}}" ` – log tag uses container name dynamically ({{.Name}} is a Docker log template).
 
-## 🌐 Network Definition
+## 🌐 Networking 
 
 ```yaml
 networks:
@@ -69,11 +69,11 @@ networks:
   - `dockerfile: ` - path to Dockerfile, provided via env variable ${ACCOUNTING_DOCKERFILE}.
   - `cache_from: ` - uses an existing image for build cache to speed up builds.
 
-- `deploy: `
-  * Used mostly in Docker Swarm, but some fields work locally:
-  * Limits memory usage to 120MB for the container.
+- `deploy: ` - Used mostly in Docker Swarm, but some fields work locally:
+  - Limits memory usage to 120MB for the container.
 
 - `Restart policy:` - Automatically restarts the container unless it's manually stopped.
+  
 - `environment:` – sets environment variables inside the container:
   - `KAFKA_ADDR` – Kafka broker address (value taken from .env)
   - `OTEL_EXPORTER_OTLP_ENDPOINT` – where the app sends telemetry (to OpenTelemetry Collector).
@@ -81,10 +81,9 @@ networks:
   - `OTEL_RESOURCE_ATTRIBUTES` – service metadata.
   - `OTEL_SERVICE_NAME=accounting` – explicitly defines service name for telemetry.
 
-- `depends_on:` – specifies service startup order:
+- `depends_on:` – Ensures accounting starts only after these dependencies are ready. specifies service startup order:
   - otel-collector must be started
   - kafka must be healthy
-  - Ensures accounting starts only after these dependencies are ready.
 
 - `logging: *logging` -  Applies the shared logging configuration defined earlier (*logging is the anchor reference to &logging).
 
