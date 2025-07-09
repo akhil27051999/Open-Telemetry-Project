@@ -24,77 +24,72 @@ x-default-logging: &logging
 - `max-file: "2" ` – keeps only the 2 most recent rotated logs.
 - `tag: "{{.Name}}" ` – log tag uses container name dynamically ({{.Name}} is a Docker log template).
 
-🌐 Network Definition
-yaml
-Copy
-Edit
+## 🌐 Network Definition
+
+```yaml
 networks:
   default:
     name: opentelemetry-demo
     driver: bridge
-Defines a network named opentelemetry-demo using the bridge driver.
+```
 
-default: means this network will be the default one for all services unless another is specified.
-
-🧱 Service Block: accounting
-yaml
-Copy
-Edit
-services:
-  # ******************
-  # Core Demo Services
-  # ******************
-  # Accounting service
-This is a comment block organizing and labeling services logically.
+* Defines a network named opentelemetry-demo using the bridge driver.
+  
+#### default: 
+* whcih means this network will be the default one for all services unless another is specified.
 
 📦 Accounting Service
-yaml
-Copy
-Edit
+
+```yaml
   accounting:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-accounting
-accounting: – service name (used in DNS, etc.)
+```
 
-image: – defines the image name dynamically using environment variables:
-
-${IMAGE_NAME} – base name (e.g., otel-demo)
-
-${DEMO_VERSION} – tag version (e.g., v1)
+#### accounting: 
+* service name (used in DNS, etc.)
+#### image: 
+* defines the image name dynamically using environment variables:
+#### ${IMAGE_NAME}
+* base name (e.g., otel-demo)
+#### ${DEMO_VERSION} 
+* tag version (e.g., v1)
 
 Results in something like: otel-demo:v1-accounting
 
-yaml
-Copy
-Edit
+```yaml
     container_name: accounting
-Sets the container name explicitly (optional, usually auto-generated).
+```
+* Sets the container name explicitly (optional, usually auto-generated).
 
-yaml
-Copy
-Edit
+```yaml
+
     build:
       context: ./
       dockerfile: ${ACCOUNTING_DOCKERFILE}
       cache_from:
         - ${IMAGE_NAME}:${IMAGE_VERSION}-accounting
-build: – Build configuration if you're building the image locally:
+```
 
-context: ./ – current directory is the build context.
+#### build:
+* Build configuration if you're building the image locally:
+#### context: ./ 
+* current directory is the build context.
+#### dockerfile: 
+* path to Dockerfile, provided via env variable ${ACCOUNTING_DOCKERFILE}.
+#### cache_from: 
+* uses an existing image for build cache to speed up builds.
 
-dockerfile: – path to Dockerfile, provided via env variable ${ACCOUNTING_DOCKERFILE}.
+```yaml
 
-cache_from: – uses an existing image for build cache to speed up builds.
-
-yaml
-Copy
-Edit
     deploy:
       resources:
         limits:
           memory: 120M
-deploy: – Used mostly in Docker Swarm, but some fields work locally:
+```
 
-Limits memory usage to 120MB for the container.
+#### deploy: 
+* Used mostly in Docker Swarm, but some fields work locally:
+* Limits memory usage to 120MB for the container.
 
 yaml
 Copy
