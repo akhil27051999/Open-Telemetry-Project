@@ -1,15 +1,5 @@
 # 🛰️ OpenTelemetry Demo service to service flow
 
-## 📦 Architecture Overview
-
-This project is designed to simulate a real-world e-commerce application with:
-
-- Foundational observability infrastructure
-- Modular microservices
-- Feature flag management
-- Orchestration layer
-- UI and load testing tools
-
 ## 📐 Service Categories & Dependency Order
 
 ### 1. Foundational Infrastructure (Telemetry, Messaging, Storage)
@@ -84,11 +74,4 @@ These services must start first as they support metrics, logs, traces, and messa
 | **Load Generator**| Locust-based tool to simulate traffic       |
 |                   | Depends on: frontend                        |
 
----
 
-## Observability Stack
-
-- **Traces**: Jaeger via OTel Collector
-- **Logs**: OpenSearch
-- **Metrics**: Prometheus + Grafana
-- **Feature Flags**: flagd + flagd-ui
