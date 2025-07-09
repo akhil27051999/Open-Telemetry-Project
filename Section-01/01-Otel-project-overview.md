@@ -8,7 +8,7 @@
 ## OpenTelemetry Architecture
 OpenTelemetry Demo is composed of microservices written in different programming languages that talk to each other over gRPC and HTTP; and a load generator which uses Locust to fake user traffic.
 
-![Screenshot 2025-07-07 163956](https://github.com/user-attachments/assets/b93aa7ee-7735-405b-a44c-1e379e7265e7)
+![Screenshot 2025-07-07 163956](https://github.com/user-attachments/assets/6bff90b6-6cb2-45a6-afa2-45cb99d6b756)
 
 
 ## 📦 OpenTelemetry Microservices Overview
