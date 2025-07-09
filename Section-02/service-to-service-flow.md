@@ -1,6 +1,6 @@
 # 🛰️ OpenTelemetry Demo service to service flow
 
-## 📐 Service Categories & Dependency Order
+## 📐 Service-to-Service flow in cronological order
 
 ### 1. Foundational Infrastructure (Telemetry, Messaging, Storage)
 
