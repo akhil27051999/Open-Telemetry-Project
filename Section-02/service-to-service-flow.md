@@ -3,7 +3,7 @@
 ## 📐 Service-to-Service flow in cronological order
 
 ### 1. Foundational Infrastructure 
-1. `OpenSearch'`starts first to store logs and traces that will be sent from OpenTelemetry Collector.
+1. `OpenSearch` starts first to store logs and traces that will be sent from OpenTelemetry Collector.
 2. `Jaeger` starts next as it will be used by OpenTelemetry Collector to visualize distributed traces.
 3. `Prometheus` begins to scrape metrics from services and store time-series data.
 4. `Grafana` starts and connects to Prometheus and OpenSearch to visualize logs, metrics, and traces.
@@ -25,8 +25,8 @@
 
 ### 2. Feature Flag Services
 
-1. flagd starts and listens for feature flag evaluations requested by various services.
-2. flagd-ui is brought up to allow UI-based configuration of the flags used by flagd.
+1. `flagd` starts and listens for feature flag evaluations requested by various services.
+2. `flagd-ui` is brought up to allow UI-based configuration of the flags used by flagd.
 
 | Service     | Purpose                             |
 |-------------|-------------------------------------|
@@ -37,18 +37,18 @@
 
 ### 3. Core Backend Microservices (Business Logic)
 
-1. Currency Service starts to provide currency conversion during checkout.
-2. Quote Service starts to offer shipping cost estimations.
-3. Product Catalog starts to offer all product listings, used by recommendation, frontend, and other services.
-4. Ad Service is initialized to deliver relevant ads to the frontend.
-5. Image Provider starts and statically serves product images, mostly accessed by frontend.
-6. Recommendation Service starts to provide personalized product recommendations based on viewed product IDs.
-7. Cart Service comes up and connects with Valkey to persist shopping cart data per user.
-8. Payment Service starts to handle payment processing during checkout (mocked for demo).
-9. Email Service is ready to send confirmation emails after successful orders.
-10. Fraud Detection Service comes online and listens to Kafka to check for fraudulent transactions.
-11. Accounting Service also listens to Kafka to record completed transactions.
-12. Shipping Service starts to calculate shipping costs and generate tracking information.
+1. `Currency Service` starts to provide currency conversion during checkout.
+2. `Quote Service` starts to offer shipping cost estimations.
+3. `Product Catalog` starts to offer all product listings, used by recommendation, frontend, and other services.
+4. `Ad Service` is initialized to deliver relevant ads to the frontend.
+5. `Image Provider` starts and statically serves product images, mostly accessed by frontend.
+6. `Recommendation Service` starts to provide personalized product recommendations based on viewed product IDs.
+7. `Cart Service` comes up and connects with Valkey to persist shopping cart data per user.
+8. `Payment Service` starts to handle payment processing during checkout (mocked for demo).
+9. `Email Service` is ready to send confirmation emails after successful orders.
+10. `Fraud Detection Service` comes online and listens to Kafka to check for fraudulent transactions.
+11. `Accounting Service` also listens to Kafka to record completed transactions.
+12. `Shipping Service` starts to calculate shipping costs and generate tracking information.
 
 | Service             | Role                                       | Dependencies    |
 |---------------------|--------------------------------------------|-----------------|
@@ -69,8 +69,8 @@
 
 ### 4. Orchestration Services
 
-1. Checkout Service starts now that all its dependencies (cart, currency, payment, shipping, email, product catalog, kafka, flagd) are ready.
-   It coordinates the end-to-end flow when a user clicks on "Checkout", calling all necessary services to place the order.
+1. `Checkout Service` starts now that all its dependencies (cart, currency, payment, shipping, email, product catalog, kafka, flagd) are ready.
+   - It coordinates the end-to-end flow when a user clicks on "Checkout", calling all necessary services to place the order.
 
 | Service          | Description                                  |
 |------------------|----------------------------------------------|
@@ -81,7 +81,7 @@
 
 ### 5. Frontend Services (UI Layer)
 
-1. Frontend service starts to provide the user-facing UI. It communicates with:
+1. `Frontend service` starts to provide the user-facing UI. It communicates with:
    - Ad Service for product ads
    - Cart Service for cart items
    - Checkout for placing orders
@@ -91,8 +91,8 @@
    - Image Provider for product images
    - Recommendation Service for product suggestions
    - Quote Service for estimated shipping costs
-2. Frontend Proxy (Envoy) starts as a reverse proxy, exposing services like frontend, Grafana, Jaeger, flagd-ui, and load generator.
-3. React Native App (if present) starts to offer a mobile interface for users using the same backend services.
+2. `Frontend Proxy (Envoy)` starts as a reverse proxy, exposing services like frontend, Grafana, Jaeger, flagd-ui, and load generator.
+3. `React Native App` (if present) starts to offer a mobile interface for users using the same backend services.
 
 | Service           | Description                                 |
 |-------------------|---------------------------------------------|
@@ -106,7 +106,7 @@
 
 ### 6. Load Testing Services
 
-1. Load Generator starts last to simulate user traffic to the frontend.
+1. `Load Generator` starts last to simulate user traffic to the frontend.
    It performs automated UI interactions (viewing products, adding to cart, placing orders) to test the system under load.
 
 | Service           | Description                                 |
