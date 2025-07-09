@@ -81,19 +81,18 @@
 
 ### 5. Frontend Services (UI Layer)
 
-#### Frontend service starts to provide the user-facing UI. It communicates with:
-
-1. Ad Service for product ads
-2. Cart Service for cart items
-3. Checkout for placing orders
-4. Currency Service for displaying prices
-5. Product Catalog for listings
-6. Shipping Service for delivery estimates
-7. Image Provider for product images
-8. Recommendation Service for product suggestions
-9. Quote Service for estimated shipping costs
-10. Frontend Proxy (Envoy) starts as a reverse proxy, exposing services like frontend, Grafana, Jaeger, flagd-ui, and load generator.
-11. React Native App (if present) starts to offer a mobile interface for users using the same backend services.
+1. Frontend service starts to provide the user-facing UI. It communicates with:
+   - Ad Service for product ads
+   - Cart Service for cart items
+   - Checkout for placing orders
+   - Currency Service for displaying prices
+   - Product Catalog for listings
+   - Shipping Service for delivery estimates
+   - Image Provider for product images
+   - Recommendation Service for product suggestions
+   - Quote Service for estimated shipping costs
+2. Frontend Proxy (Envoy) starts as a reverse proxy, exposing services like frontend, Grafana, Jaeger, flagd-ui, and load generator.
+3. React Native App (if present) starts to offer a mobile interface for users using the same backend services.
 
 | Service           | Description                                 |
 |-------------------|---------------------------------------------|
