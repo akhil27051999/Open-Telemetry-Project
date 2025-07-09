@@ -1,4 +1,4 @@
-# 🛰️ OpenTelemetry Demo service to service flow
+# 🛰️ OpenTelemetry Project Service to Service Flow
 
 ## 📐 Service-to-Service flow in cronological order
 
