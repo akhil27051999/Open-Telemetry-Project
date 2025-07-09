@@ -70,9 +70,9 @@ networks:
 - `dockerfile: ` - path to Dockerfile, provided via env variable ${ACCOUNTING_DOCKERFILE}.
 - `cache_from: ` - uses an existing image for build cache to speed up builds.
 
-- `deploy: ` 
-* Used mostly in Docker Swarm, but some fields work locally: 
-* Limits memory usage to 120MB for the container.
+- `deploy: `
+  * Used mostly in Docker Swarm, but some fields work locally:
+  * Limits memory usage to 120MB for the container.
 
 - `Restart policy:` - Automatically restarts the container unless it's manually stopped.
 - `environment:` – sets environment variables inside the container:
@@ -83,11 +83,9 @@ networks:
 - `OTEL_SERVICE_NAME=accounting` – explicitly defines service name for telemetry.
 
 - `depends_on:` – specifies service startup order:
+  * otel-collector must be started
+  * kafka must be healthy
+  * Ensures accounting starts only after these dependencies are ready.
 
-* otel-collector must be started
-* kafka must be healthy
-* Ensures accounting starts only after these dependencies are ready.
-
-`logging: *logging`
-* Applies the shared logging configuration defined earlier (*logging is the anchor reference to &logging).
+- `logging: *logging` -  Applies the shared logging configuration defined earlier (*logging is the anchor reference to &logging).
 
