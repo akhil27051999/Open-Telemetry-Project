@@ -201,3 +201,15 @@ networks:
         condition: service_started
     logging: *logging
 ```
+
+- `environment:` – sets environment variables inside the container:
+  - `CART_PORT` - Port on which the Cart service will run
+  - `FLAGD_HOST` - Hostname/IP of the Feature Flag Daemon (flagd)
+  - `FLAGD_PORT` - Port on which flagd is listening
+  - `VALKEY_ADDR` - Redis-compatible Valkey address for storing cart data (e.g., valkey:6379)
+  - `OTEL_EXPORTER_OTLP_ENDPOINT` - Endpoint of the OpenTelemetry Collector for exporting telemetry data
+  - `OTEL_RESOURCE_ATTRIBUTES` - Metadata used for identifying service instance (e.g., environment, version)
+  - `OTEL_SERVICE_NAME=cart` - Name used by observability tools for this service
+  - `ASPNETCORE_URLS=http://*:${CART_PORT}` - ASP.NET Core setting to listen on all interfaces on the specified port
+ 
+---
