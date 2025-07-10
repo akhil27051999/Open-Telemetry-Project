@@ -163,3 +163,41 @@ networks:
   - flagd must be started
     
 - `logging: *logging` -  Applies the shared logging configuration defined earlier (*logging is the anchor reference to &logging).
+---
+
+### 🛒 Cart Service
+
+```yaml
+  cart:
+    image: ${IMAGE_NAME}:${DEMO_VERSION}-cart
+    container_name: cart
+    build:
+      context: ./
+      dockerfile: ${CART_DOCKERFILE}
+      cache_from:
+        - ${IMAGE_NAME}:${IMAGE_VERSION}-cart
+    deploy:
+      resources:
+        limits:
+          memory: 160M
+    restart: unless-stopped
+    ports:
+      - "${CART_PORT}"                           # Maps the container's exposed port to the host using CART_PORT env variable
+    environment:
+      - CART_PORT                                # Port on which the Cart service will run
+      - FLAGD_HOST                                # Hostname/IP of the Feature Flag Daemon (flagd)
+      - FLAGD_PORT                                # Port on which flagd is listening
+      - VALKEY_ADDR                               # Redis-compatible Valkey address for storing cart data (e.g., valkey:6379)
+      - OTEL_EXPORTER_OTLP_ENDPOINT               # Endpoint of the OpenTelemetry Collector for exporting telemetry data
+      - OTEL_RESOURCE_ATTRIBUTES                  # Metadata used for identifying service instance (e.g., environment, version)
+      - OTEL_SERVICE_NAME=cart                    # Name used by observability tools for this service
+      - ASPNETCORE_URLS=http://*:${CART_PORT}     # ASP.NET Core setting to listen on all interfaces on the specified port
+    depends_on:
+      valkey-cart:
+        condition: service_started
+      otel-collector:
+        condition: service_started
+      flagd:
+        condition: service_started
+    logging: *logging
+```
