@@ -76,7 +76,7 @@
 
 
 
-## 5. Frontend Services (UI Layer)
+## 5. 🖥️ Frontend Services (UI Layer)
 
 1. `Frontend service` starts to provide the user-facing UI. It communicates with:
    - Ad Service for product ads
@@ -101,7 +101,7 @@
 
 
 
-## 6. Load Testing Services
+## 6. 🧪 Load Testing Services
 
 1. `Load Generator` starts last to simulate user traffic to the frontend.
    It performs automated UI interactions (viewing products, adding to cart, placing orders) to test the system under load.
