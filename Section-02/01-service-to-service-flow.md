@@ -64,7 +64,7 @@
 
 
 
-## 4. Orchestration Services
+## 4. ☸️ Orchestration Services
 
 1. `Checkout Service` starts now that all its dependencies (cart, currency, payment, shipping, email, product catalog, kafka, flagd) are ready.
    - It coordinates the end-to-end flow when a user clicks on "Checkout", calling all necessary services to place the order.
