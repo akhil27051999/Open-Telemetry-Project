@@ -1,5 +1,41 @@
 # 📦 Docker Compose File Explaination To Test Services Locally
 
+## 🧱 Compose File Structure
+
+### 1️⃣ **Services**
+Each containerized microservice is defined as a service. Key components:
+
+- **`image:`** The image to be used or built
+- **`container_name:`** Custom name for the container
+- **`build:`**
+  - `context:` Build context directory
+  - `dockerfile:` Dockerfile path for service
+  - `cache_from:` Reuses previous builds to optimize performance
+- **`deploy:`** Memory/resource limits for containers
+- **`restart:`** Ensures containers restart on failure (`unless-stopped`)
+- **`environment:`** Injects environment variables into containers
+- **`depends_on:`** Ensures a service only starts once its dependencies are ready
+- **`logging:`** Defines the logging driver and its configuration
+
+### 2️⃣ **Networks**
+```yaml
+networks:
+  default:
+    name: opentelemetry-demo
+    driver: bridge
+```
+- Used to connect services internally.
+
+### 3️⃣ **Volumes (Storage)**
+```yaml
+volumes:
+  db-data:
+```
+- Persist data between container restarts.
+
+---
+  
+
 ## 🔁 Global Logging Configuration
 ```yaml
 x-default-logging: &logging
