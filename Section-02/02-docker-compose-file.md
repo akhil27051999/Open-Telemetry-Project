@@ -73,6 +73,8 @@ networks:
 
 ### 📦 Accounting Service
 
+-This service calculates the total amount of sold products. This is only mocked and received orders are printed out.
+
 ```yaml
   accounting:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-accounting
@@ -134,6 +136,8 @@ networks:
 
 ### 📢 Ad Service
 
+- This service determines appropriate ads to serve to users based on context keys. The ads will be for products available in the store.
+
 ```yaml
   ad:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-ad
@@ -182,6 +186,8 @@ networks:
 
 ### 🛒 Cart Service
 
+- This service maintains items placed in the shopping cart by users. It interacts with a Valkey caching service for fast access to shopping cart data.
+
 ```yaml
   cart:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-cart
@@ -229,6 +235,8 @@ networks:
 ---
 
 ### 📦 Checkout Service
+
+- This service is responsible to process a checkout order from the user. The checkout service will call many other services in order to process an order.
 
 ```yaml
   checkout:
@@ -296,6 +304,8 @@ networks:
 
 ### 💱 Currency Service
 
+ - This service provides functionality to convert amounts between different currencies.
+
 ```yaml
   currency:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-currency
@@ -333,6 +343,8 @@ networks:
 
 ### 📧 Email Service
 
+- This service will send a confirmation email to the user when an order is placed.
+
 ```yaml
   email:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-email
@@ -369,6 +381,9 @@ networks:
 
 ---
 ### 🔍 Fraud Detection Service
+
+- This service analyses incoming orders and detects malicious customers. This is only mocked and received orders are printed out.
+
 ```yaml
   fraud-detection:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-fraud-detection
@@ -414,6 +429,8 @@ networks:
 
 ---
 ### 🌐 Frontend Service
+
+- The frontend is responsible to provide a UI for users, as well as an API leveraged by the UI or other clients. The application is based on Next.JS to provide a React web-based UI and API routes.
 
 ```yaml
   frontend:
@@ -488,6 +505,8 @@ networks:
 ---
 ### 🌐 Frontend Proxy (Envoy)
 
+- The frontend proxy is used as a reverse proxy for user-facing web interfaces such as the frontend, Jaeger, Grafana, load generator, and feature flag service.
+
 ```yaml
   frontend-proxy:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-frontend-proxy
@@ -543,6 +562,9 @@ networks:
 ---
 
 ### 🖼️ Image Provider
+
+- This service provides the images which are used in the frontend. The images are statically hosted on a NGINX instance. The NGINX server is instrumented with the nginx-otel module.
+
 ```yaml
   image-provider:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-image-provider
@@ -578,6 +600,8 @@ networks:
 
 ---
 ### 🧪 Load Generator
+
+- The load generator is based on the Python load testing framework Locust. By default it will simulate users requesting several different routes from the frontend.
 
 ```yaml
   load-generator:
@@ -625,6 +649,8 @@ networks:
 
 ### 💳 Payment Service
 
+- This service is responsible to process credit card payments for orders. It will return an error if the credit card is invalid or the payment cannot be processed.
+
 ```yaml
   payment:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-payment
@@ -662,6 +688,9 @@ networks:
 ---
 
 ### 🎁 Product Catalog
+
+- This service is responsible to return information about products. The service can be used to get all products, search for specific products, or return details about any single product.
+
 ```yaml
   product-catalog:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-product-catalog
@@ -703,6 +732,9 @@ networks:
 
 ---
 ### 🧾 Quote Service
+
+- This service is responsible for calculating shipping costs, based on the number of items to be shipped. The quote service is called from Shipping Service via HTTP.
+
 ```yaml
   quote:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-quote
@@ -737,6 +769,8 @@ networks:
 
 ---
 ### 🎯 Recommendation Service
+
+- This service is responsible to get a list of recommended products for the user based on existing product IDs the user is browsing.
 
 ```yaml
   recommendation:
@@ -782,6 +816,9 @@ networks:
 
 ---
 ### 🚚 Shipping Service
+
+- This service is responsible for providing shipping information including pricing and tracking information, when requested from Checkout Service.
+
 ```yaml
   shipping:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-shipping
@@ -818,6 +855,8 @@ networks:
 
 ### 🚩 Flagd Service
 
+- flagd is the feature flagging daemon used in modern cloud-native applications.
+
 ```yaml
   flagd:
     image: ${FLAGD_IMAGE}
@@ -852,6 +891,7 @@ networks:
 ---
 
 ### 🖥️ Flagd UI
+
 ```yaml
   flagd-ui:
     image: ${IMAGE_NAME}:${DEMO_VERSION}-flagd-ui
@@ -884,6 +924,9 @@ networks:
 ---
 
 ### 📬 Kafka
+
+- This is used as a message queue service to connect the checkout service with the accounting and fraud detection services.
+
 ```yaml
   kafka:
     image: ghcr.io/open-telemetry/demo:1.12.0-kafka
@@ -943,6 +986,10 @@ networks:
 ## 🔭 Telemetry Components
 
 ### 🕵️ Jaeger
+
+- jaeger is an open-source distributed tracing system used for monitoring and troubleshooting microservices.
+- It helps you visualize the flow of requests through your architecture — from frontend to backend — and understand latency, failures, and bottlenecks
+
 ```yaml
   jaeger:
     image: ${JAEGERTRACING_IMAGE}
@@ -970,6 +1017,10 @@ networks:
 ---
 
 ### 📈 Grafana
+
+- Grafana is an open-source visualization and dashboard tool used to monitor metrics, logs, and traces from various data sources like Prometheus, OpenSearch, Loki, and more.
+- It helps you understand your system's health in real-time by turning raw observability data into interactive dashboards and alerts.
+  
 ```yaml
   grafana:
     image: ${GRAFANA_IMAGE}
@@ -993,6 +1044,9 @@ networks:
 ---
 
 ### 📦 OpenTelemetry Collector
+
+- The OpenTelemetry Collector is a vendor-neutral, pluggable service that receives, processes, and exports telemetry data — including metrics, logs, and traces — from your microservices to backends like Prometheus, Jaeger, Grafana, OpenSearch, etc.
+  
 ```yaml
   otel-collector:
     image: ${COLLECTOR_CONTRIB_IMAGE}
@@ -1031,6 +1085,10 @@ networks:
 
 ---
 ### 📊 Prometheus
+
+- Prometheus is an open-source monitoring and alerting system built for recording real-time metrics from services and infrastructure.
+- It is widely used in cloud-native environments, especially with Kubernetes and microservices.
+  
 ```yaml
   prometheus:
     image: ${PROMETHEUS_IMAGE}
@@ -1060,6 +1118,14 @@ networks:
 ---
 
 ### 🔎 OpenSearch
+
+- OpenSearch is an open-source search, log analytics, and observability platform, originally forked from Elasticsearch.
+- It is used for:
+  - Search and indexing of log and trace data
+  - Storage of structured and unstructured documents
+  - Dashboards to explore logs, metrics, and traces via OpenSearch Dashboards (like Kibana)
+
+
 ```yaml
   opensearch:
     image: ${OPENSEARCH_IMAGE}
