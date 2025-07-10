@@ -1,4 +1,4 @@
-# 📦 Otel Docker Compose File Explaination To Test Services Locally
+# 📦 Docker Compose File To Test Services Locally
 
 ## 🧱 Compose File Structure
 
@@ -34,6 +34,7 @@ volumes:
 - Persist data between container restarts.
 
 ---
+# 📦 Otel Docker Compose File Explaination To Test Services Locally
 
 ## 🔁 Global Logging Configuration
 ```yaml
