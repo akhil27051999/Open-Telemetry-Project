@@ -800,7 +800,7 @@ networks:
   - `OTEL_SERVICE_NAME=shipping` - Telemetry ID
 ---
 
-## Dependent Services
+## 📚 Dependent Services
 
 ### 🚩 Flagd Service
 
