@@ -73,7 +73,7 @@ networks:
 
 ### 📦 Accounting Service
 
--This service calculates the total amount of sold products. This is only mocked and received orders are printed out.
+- This service calculates the total amount of sold products. This is only mocked and received orders are printed out.
 
 ```yaml
   accounting:
