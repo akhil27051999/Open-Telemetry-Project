@@ -926,7 +926,7 @@ networks:
 ```
   - No environment variables, just ports and memory limits
 ---
-## Telemetry Components
+## 🔭 Telemetry Components
 
 ### 🕵️ Jaeger
 ```yaml
