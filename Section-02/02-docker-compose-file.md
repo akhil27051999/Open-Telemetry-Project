@@ -130,7 +130,7 @@ networks:
       flagd:
         condition: service_started
     logging: *logging
-    ```
+```
 
 - `ad: ` - service name (used in DNS, etc.)
 - `image: ` - defines the image name dynamically using environment variables:
