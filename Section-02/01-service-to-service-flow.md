@@ -1,6 +1,6 @@
 # 🛰️ OpenTelemetry Project Service to Service Flow
 
-## 1. Foundational Infrastructure 
+## 1. 🧱 Foundational Infrastructure 
 1. `OpenSearch` starts first to store logs and traces that will be sent from OpenTelemetry Collector.
 2. `Jaeger` starts next as it will be used by OpenTelemetry Collector to visualize distributed traces.
 3. `Prometheus` begins to scrape metrics from services and store time-series data.
