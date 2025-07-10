@@ -798,12 +798,295 @@ networks:
   - `SHIPPING_PORT`, `QUOTE_ADDR` - Service port and dependency
   - `OTEL_*` - Observability configs (uses gRPC port)
   - `OTEL_SERVICE_NAME=shipping` - Telemetry ID
+---
 
+## Dependent Services
 
+### 🚩 Flagd Service
 
+```yaml
+  flagd:
+    image: ${FLAGD_IMAGE}
+    container_name: flagd
+    deploy:
+      resources:
+        limits:
+          memory: 75M
+    restart: unless-stopped
+    environment:
+      - FLAGD_OTEL_COLLECTOR_URI=${OTEL_COLLECTOR_HOST}:${OTEL_COLLECTOR_PORT_GRPC}
+      - FLAGD_METRICS_EXPORTER=otel
+      - OTEL_RESOURCE_ATTRIBUTES
+      - OTEL_SERVICE_NAME=flagd
+    command: [
+      "start",
+      "--uri",
+      "file:./etc/flagd/demo.flagd.json"
+    ]
+    ports:
+      - 8013
+    volumes:
+      - ./src/flagd:/etc/flagd
+    logging:
+      *logging
+```
+  - `FLAGD_OTEL_COLLECTOR_URI` - OTLP target for telemetry from flagd
+  - `FLAGD_METRICS_EXPORTER=otel` - Export metrics using OTLP
+  - `OTEL_RESOURCE_ATTRIBUTES` - Service metadata
+  - `OTEL_SERVICE_NAME=flagd` - Service ID for flagd
 
+---
 
+### 🖥️ Flagd UI
+```yaml
+  flagd-ui:
+    image: ${IMAGE_NAME}:${DEMO_VERSION}-flagd-ui
+    container_name: flagd-ui
+    build:
+      context: ./
+      dockerfile: ${FLAGD_UI_DOCKERFILE}
+    deploy:
+      resources:
+        limits:
+          memory: 75M
+    restart: unless-stopped
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://${OTEL_COLLECTOR_HOST}:${OTEL_COLLECTOR_PORT_HTTP}
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+      - OTEL_RESOURCE_ATTRIBUTES
+      - OTEL_SERVICE_NAME=flagd-ui
+    ports:
+      - "${FLAGD_UI_PORT}"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      flagd:
+        condition: service_started
+    volumes:
+      - ./src/flagd:/app/data
+```
+  - `OTEL_*` - Observability export config
+  - `OTEL_SERVICE_NAME=flagd-ui` - Telemetry logical ID
+---
 
+### 📬 Kafka
+```yaml
+  kafka:
+    image: ghcr.io/open-telemetry/demo:1.12.0-kafka
+    container_name: kafka
+    build:
+      context: ./
+      dockerfile: ${KAFKA_DOCKERFILE}
+      cache_from:
+        - ${IMAGE_NAME}:${IMAGE_VERSION}-kafka
+      args:
+        OTEL_JAVA_AGENT_VERSION: ${OTEL_JAVA_AGENT_VERSION}
+    deploy:
+      resources:
+        limits:
+          memory: 620M
+    restart: unless-stopped
+    environment:
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://${OTEL_COLLECTOR_HOST}:${OTEL_COLLECTOR_PORT_HTTP}
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+      - OTEL_RESOURCE_ATTRIBUTES
+      - OTEL_SERVICE_NAME=kafka
+      - KAFKA_HEAP_OPTS=-Xmx400m -Xms400m
+      # Workaround on OSX for https://bugs.openjdk.org/browse/JDK-8345296
+      - _JAVA_OPTIONS
+    healthcheck:
+      test: nc -z kafka 9092
+      start_period: 10s
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    logging: *logging
+```
+  - `KAFKA_ADVERTISED_LISTENERS` - Broker configuration
+  - `OTEL_*` - Tracing and metrics config
+  - `KAFKA_HEAP_OPTS` - JVM memory tuning
+  - `_JAVA_OPTIONS` - Additional options (e.g., OSX workaround)
+---
+
+### 🗄️ Valkey (Redis Replacement)
+```yaml
+  valkey-cart:
+    image: ${VALKEY_IMAGE}
+    container_name: valkey-cart
+    user: valkey
+    deploy:
+      resources:
+        limits:
+          memory: 20M
+    restart: unless-stopped
+    ports:
+      - "${VALKEY_PORT}"
+    logging: *logging
+```
+  - No environment variables, just ports and memory limits
+---
+## Telemetry Components
+
+### 🕵️ Jaeger
+```yaml
+  jaeger:
+    image: ${JAEGERTRACING_IMAGE}
+    container_name: jaeger
+    command:
+      - "--memory.max-traces=25000"
+      - "--query.base-path=/jaeger/ui"
+      - "--prometheus.server-url=http://${PROMETHEUS_ADDR}"
+      - "--prometheus.query.normalize-calls=true"
+      - "--prometheus.query.normalize-duration=true"
+    deploy:
+      resources:
+        limits:
+          memory: 1200M
+    restart: unless-stopped
+    ports:
+      - "${JAEGER_PORT}"         # Jaeger UI
+      - "${OTEL_COLLECTOR_PORT_GRPC}"
+    environment:
+      - METRICS_STORAGE_TYPE=prometheus
+    logging: *logging
+```
+  - `METRICS_STORAGE_TYPE=prometheus` - Stores metrics in Prometheus backend
+
+---
+
+### 📈 Grafana
+```yaml
+  grafana:
+    image: ${GRAFANA_IMAGE}
+    container_name: grafana
+    deploy:
+      resources:
+        limits:
+          memory: 120M
+    restart: unless-stopped
+    environment:
+      - "GF_INSTALL_PLUGINS=grafana-opensearch-datasource"
+    volumes:
+      - ./src/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./src/grafana/provisioning/:/etc/grafana/provisioning/
+    ports:
+      - "${GRAFANA_PORT}"
+    logging: *logging
+```
+  - `GF_INSTALL_PLUGINS` - Pre-install required Grafana plugins (like OpenSearch)
+
+---
+
+### 📦 OpenTelemetry Collector
+```yaml
+  otel-collector:
+    image: ${COLLECTOR_CONTRIB_IMAGE}
+    container_name: otel-collector
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+    restart: unless-stopped
+    command: [ "--config=/etc/otelcol-config.yml", "--config=/etc/otelcol-config-extras.yml" ]
+    user: 0:0
+    volumes:
+      - ${HOST_FILESYSTEM}:/hostfs:ro
+      - ${DOCKER_SOCK}:/var/run/docker.sock:ro
+      - ${OTEL_COLLECTOR_CONFIG}:/etc/otelcol-config.yml
+      - ${OTEL_COLLECTOR_CONFIG_EXTRAS}:/etc/otelcol-config-extras.yml
+    ports:
+      - "${OTEL_COLLECTOR_PORT_GRPC}"
+      - "${OTEL_COLLECTOR_PORT_HTTP}"
+    depends_on:
+      jaeger:
+        condition: service_started
+      opensearch:
+        condition: service_healthy
+    logging: *logging
+    environment:
+      - ENVOY_PORT
+      - HOST_FILESYSTEM
+      - OTEL_COLLECTOR_HOST
+      - OTEL_COLLECTOR_PORT_GRPC
+      - OTEL_COLLECTOR_PORT_HTTP
+```
+
+  - `OTEL_COLLECTOR_HOST`, `OTEL_COLLECTOR_PORT_*` - Used by exporters to send data
+  - `HOST_FILESYSTEM` - Allows host metrics collection from `/hostfs`
+
+---
+### 📊 Prometheus
+```yaml
+  prometheus:
+    image: ${PROMETHEUS_IMAGE}
+    container_name: prometheus
+    command:
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --storage.tsdb.retention.time=1h
+      - --config.file=/etc/prometheus/prometheus-config.yaml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+      - --web.route-prefix=/
+      - --web.enable-otlp-receiver
+      - --enable-feature=exemplar-storage
+    volumes:
+      - ./src/prometheus/prometheus-config.yaml:/etc/prometheus/prometheus-config.yaml
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT}:${PROMETHEUS_PORT}"
+    logging: *logging
+```
+  - No environment section, configured entirely via command-line arguments and mounted config file
+---
+
+### 🔎 OpenSearch
+```yaml
+  opensearch:
+    image: ${OPENSEARCH_IMAGE}
+    container_name: opensearch
+    deploy:
+      resources:
+        limits:
+          memory: 1.1G
+    restart: unless-stopped
+    environment:
+      - cluster.name=demo-cluster
+      - node.name=demo-node
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - OPENSEARCH_JAVA_OPTS=-Xms300m -Xmx300m
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - DISABLE_SECURITY_PLUGIN=true
+      # Workaround on OSX for https://bugs.openjdk.org/browse/JDK-8345296
+      - _JAVA_OPTIONS
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "9200"
+    healthcheck:
+      test: curl -s http://localhost:9200/_cluster/health | grep -E '"status":"(green|yellow)"'
+      start_period: 10s
+      interval: 5s
+      timeout: 30s
+      retries: 10
+    logging: *logging
+```
+  - `cluster.name`, `node.name` - Cluster identity
+  - `bootstrap.memory_lock=true` - Prevent memory swapping
+  - `discovery.type=single-node` - For dev mode
+  - JVM tuning via `OPENSEARCH_JAVA_OPTS`
+  - OSX workaround via `_JAVA_OPTIONS`
 
 
 
