@@ -171,15 +171,14 @@ networks:
     logging: *logging
 ```
 
-- `environment:` – sets environment variables inside the container:
-  - `AD_PORT` - Port on which the Ad Service listens for HTTP requests
-  - `FLAGD_HOST` - Hostname/IP of the Feature Flag Daemon (flagd) for dynamic config
-  - `FLAGD_PORT` - Port on which flagd is running
-  - `OTEL_EXPORTER_OTLP_ENDPOINT=http://${OTEL_COLLECTOR_HOST}:${OTEL_COLLECTOR_PORT_HTTP}` - Endpoint of the OpenTelemetry Collector to export telemetry data (traces/metrics/logs)
-  - `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` - Configures whether metrics are cumulative or delta (e.g., 'delta', 'cumulative')
-  - `OTEL_RESOURCE_ATTRIBUTES` - Metadata about the service (e.g., service.version, deployment.environment)
-  - `OTEL_LOGS_EXPORTER=otlp` - Specifies that logs should be exported using OTLP protocol
-  - `OTEL_SERVICE_NAME=ad` - Logical name of this service in traces and metrics (shown in tools like Jaeger/Grafana)
+- `AD_PORT` - Port on which the Ad Service listens for HTTP requests
+- `FLAGD_HOST` - Hostname/IP of the Feature Flag Daemon (flagd) for dynamic config
+- `FLAGD_PORT` - Port on which flagd is running
+- `OTEL_EXPORTER_OTLP_ENDPOINT=http://${OTEL_COLLECTOR_HOST}:${OTEL_COLLECTOR_PORT_HTTP}` - Endpoint of the OpenTelemetry Collector to export telemetry data (traces/metrics/logs)
+- `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` - Configures whether metrics are cumulative or delta (e.g., 'delta', 'cumulative')
+- `OTEL_RESOURCE_ATTRIBUTES` - Metadata about the service (e.g., service.version, deployment.environment)
+- `OTEL_LOGS_EXPORTER=otlp` - Specifies that logs should be exported using OTLP protocol
+- `OTEL_SERVICE_NAME=ad` - Logical name of this service in traces and metrics (shown in tools like Jaeger/Grafana)
 
 ### 🛒 Cart Service
 
@@ -218,15 +217,14 @@ networks:
     logging: *logging
 ```
 
-- `environment:` – sets environment variables inside the container:
-  - `CART_PORT` - Port on which the Cart service will run
-  - `FLAGD_HOST` - Hostname/IP of the Feature Flag Daemon (flagd)
-  - `FLAGD_PORT` - Port on which flagd is listening
-  - `VALKEY_ADDR` - Redis-compatible Valkey address for storing cart data (e.g., valkey:6379)
-  - `OTEL_EXPORTER_OTLP_ENDPOINT` - Endpoint of the OpenTelemetry Collector for exporting telemetry data
-  - `OTEL_RESOURCE_ATTRIBUTES` - Metadata used for identifying service instance (e.g., environment, version)
-  - `OTEL_SERVICE_NAME=cart` - Name used by observability tools for this service
-  - `ASPNETCORE_URLS=http://*:${CART_PORT}` - ASP.NET Core setting to listen on all interfaces on the specified port
+- `CART_PORT` - Port on which the Cart service will run
+- `FLAGD_HOST` - Hostname/IP of the Feature Flag Daemon (flagd)
+- `FLAGD_PORT` - Port on which flagd is listening
+- `VALKEY_ADDR` - Redis-compatible Valkey address for storing cart data (e.g., valkey:6379)
+- `OTEL_EXPORTER_OTLP_ENDPOINT` - Endpoint of the OpenTelemetry Collector for exporting telemetry data
+- `OTEL_RESOURCE_ATTRIBUTES` - Metadata used for identifying service instance (e.g., environment, version)
+- `OTEL_SERVICE_NAME=cart` - Name used by observability tools for this service
+- `ASPNETCORE_URLS=http://*:${CART_PORT}` - ASP.NET Core setting to listen on all interfaces on the specified port
  
 ---
 
