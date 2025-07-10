@@ -32,7 +32,7 @@
 
 
 
-## 3. Core Backend Microservices (Business Logic)
+## 3. 📚 Core Backend Microservices (Business Logic)
 
 1. `Currency Service` starts to provide currency conversion during checkout.
 2. `Quote Service` starts to offer shipping cost estimations.
