@@ -20,7 +20,7 @@
 | **Valkey (Redis)** | Cart service backend cache                |
 
 
-## 2. Feature Flag Services
+## 2. 🚩 Feature Flag Services
 
 1. `flagd` starts and listens for feature flag evaluations requested by various services.
 2. `flagd-ui` is brought up to allow UI-based configuration of the flags used by flagd.
