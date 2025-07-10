@@ -1,6 +1,9 @@
-# 📦 Docker Compose File To Test Services Locally
+# 🐳 Docker Compose 
 
-## 🧱 Compose File Structure
+- Docker Compose is a tool for defining and managing multi-container Docker applications using a simple YAML configuration file (docker-compose.yml).
+- Instead of running individual `docker run` commands for each service (e.g., frontend, backend, database), Compose lets us define and run all of them together with a single command.
+
+## 🧱 Docker Compose File Structure 
 
 ### 1️⃣ **Services**
 Each containerized microservice is defined as a service. Key components:
