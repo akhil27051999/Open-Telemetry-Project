@@ -1,4 +1,16 @@
-## 📦 Accounting Service Dockerfile
+## 📦 Accounting Service 
+**This service calculates the total amount of sold products. This is only mocked and received orders are printed out.**
+
+### Local Build
+
+To build the service binary, run:
+
+```sh
+cp pb/demo.proto src/accouting/proto/demo.proto # root context
+dotnet build # accounting service context
+```
+
+### Dockerfile
 
 ```Dockerfile
 
