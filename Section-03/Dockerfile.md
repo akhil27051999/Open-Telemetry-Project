@@ -1,7 +1,7 @@
 ## 📦 Accounting Service 
 **This service calculates the total amount of sold products. This is only mocked and received orders are printed out.**
 
-### Building Locally
+### Local Build
 
 To build the service binary, run:
 
@@ -60,7 +60,7 @@ The final stage uses the lightweight `mcr.microsoft.com/dotnet/aspnet:8.0` base 
 
 **This service determines appropriate ads to serve to users based on context keys. The ads will be for products available in the store.**
 
-### Building Locally
+### Local Build
 
 The Ad service requires at least JDK 17 to build and uses gradlew to
 compile/install/distribute. Gradle wrapper is already part of the source code.
@@ -131,8 +131,12 @@ Next, the source code is copied into the container, including the protocol buffe
 
 The final stage uses the lighter `eclipse-temurin:21-jre` runtime image to package and run the application without the overhead of the JDK. It sets the same working directory and copies all build artifacts from the `builder` stage. It also sets an environment variable `AD_PORT` with a default value of `9099`, which is likely the internal port the Ad service listens on. Finally, it defines the entrypoint using the shell script produced by the Gradle distribution install: `./build/install/opentelemetry-demo-ad/bin/Ad`. This script launches the service using the precompiled and properly structured Java application. This multi-stage approach ensures a clean separation between build-time and runtime dependencies, resulting in a smaller, production-ready image with all necessary application logic and protobuf integrations baked in.
 
-## 🛒 Cart Service Dockerfile
+## 🛒 Cart Service 
 
+### Local Build
+Run `dotnet restore` and `dotnet build`.
+
+### Dockerfile
 ```Dockerfile
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS builder
@@ -160,6 +164,15 @@ ENV DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
 EXPOSE ${CART_PORT}
 ENTRYPOINT [ "./cart" ]
 ```
+
+# Cart Service - Dockerfile Explanation
+
+This Dockerfile is a multi-stage build setup designed for the **Cart** microservice, written in .NET 8 and optimized for lightweight Alpine-based deployment. The first stage, named `builder`, uses the full .NET SDK image (`mcr.microsoft.com/dotnet/sdk:8.0`) with platform awareness via the `--platform=$BUILDPLATFORM` directive. It accepts a build-time argument `TARGETARCH` to ensure architecture-specific builds (such as `amd64` or `arm64`). The working directory is set to `/usr/src/app/`, and source files from the `src/cart` directory and protobuf definitions from the `pb` directory are copied into the container.
+
+The build process starts with `dotnet restore`, where the `cart.csproj` project file is restored with dependencies specific to the musl-libc Linux runtime (`linux-musl-$TARGETARCH`), suitable for Alpine-based images. Then, `dotnet publish` is used to compile and publish the application without restoring again (`--no-restore`) and outputs the final build artifacts into `/cart`.
+
+The second and final stage uses the ultra-lightweight `mcr.microsoft.com/dotnet/runtime-deps:8.0-alpine3.20` image, which only includes the minimum dependencies needed to run a .NET app. This significantly reduces the image size and attack surface. It copies the published build from the previous stage into `/usr/src/app/`, sets an environment variable `DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false` to disable configuration reload-on-change for performance and stability in containers, exposes the service port `${CART_PORT}`, and sets the entrypoint to run the `cart` binary directly. This structure ensures a small, secure, and performance-optimized container ready for production deployment.
+
 ## 📦 Checkout Service Dockerfile
 
 ```Dockerfile
