@@ -1,7 +1,7 @@
 ## 📦 Accounting Service 
 **This service calculates the total amount of sold products. This is only mocked and received orders are printed out.**
 
-### Local Build
+### Building Locally
 
 To build the service binary, run:
 
@@ -57,6 +57,42 @@ The final stage uses the lightweight `mcr.microsoft.com/dotnet/aspnet:8.0` base 
 
   
 ## 📢 Ad Service Dockerfile
+
+**This service determines appropriate ads to serve to users based on context keys. The ads will be for products available in the store.**
+
+### Building Locally
+
+The Ad service requires at least JDK 17 to build and uses gradlew to
+compile/install/distribute. Gradle wrapper is already part of the source code.
+To build Ad Service, run:
+
+```sh
+./gradlew installDist
+
+<or>
+
+./gradlew installDist -PprotoSourceDir=./proto
+```
+
+It will create an executable script
+`src/ad/build/install/oteldemo/bin/Ad`.
+
+To run the Ad Service:
+
+```sh
+export AD_PORT=8080
+export FEATURE_FLAG_GRPC_SERVICE_ADDR=featureflagservice:50053
+./build/install/opentelemetry-demo-ad/bin/Ad
+```
+
+### Upgrading Gradle
+
+If you need to upgrade the version of gradle then run
+
+```sh
+./gradlew wrapper --gradle-version <new-version>
+```
+
 
 ```Dockerfile
 FROM eclipse-temurin:21-jdk AS builder
