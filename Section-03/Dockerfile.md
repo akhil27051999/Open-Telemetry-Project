@@ -56,7 +56,7 @@ The second stage, named `publish`, uses the previously built artifacts to publis
 The final stage uses the lightweight `mcr.microsoft.com/dotnet/aspnet:8.0` base runtime image to run the service. It switches to a non-root user (`app`) for security best practices, sets the working directory to `/app`, and copies the published output from the previous stage. It then briefly switches to the root user to create and set ownership on a log directory (`/var/log/opentelemetry/dotnet`) and the instrumentation script (`instrument.sh`) so that the `app` user can access them. Finally, the container reverts to the non-root user and uses the `instrument.sh` script as its entrypoint, wrapping the service launch command `dotnet Accounting.dll`. This design ensures that the application is built efficiently, runs securely, and is ready for observability through OpenTelemetry instrumentation.
 
   
-## 📢 Ad Service Dockerfile
+## 📢 Ad Service 
 
 **This service determines appropriate ads to serve to users based on context keys. The ads will be for products available in the store.**
 
@@ -93,7 +93,7 @@ If you need to upgrade the version of gradle then run
 ./gradlew wrapper --gradle-version <new-version>
 ```
 
-
+### Dockerfile
 ```Dockerfile
 FROM eclipse-temurin:21-jdk AS builder
 
