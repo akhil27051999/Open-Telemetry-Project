@@ -225,6 +225,8 @@ The second stage uses a minimal `alpine` base image for the final runtime contai
 
 ## 💱 Currency Service 
 
+**This service provides functionality to convert amounts between different currencies.**
+
 ### Dockerfile
 
 ```Dockerfile
@@ -276,8 +278,20 @@ The second stage, named `release`, starts again from a clean `alpine:3.18` image
 The container exposes the port specified by the `CURRENCY_PORT` environment variable and sets the entrypoint to run the `currency` binary using a `sh -c` wrapper, passing in the port dynamically. This separation between build and runtime stages results in a secure, lean, and production-ready image for deploying the C++ Currency microservice with OpenTelemetry integration.
 
 
-## 📧 Email Service Dockerfile
+## 📧 Email Service 
 
+**This service will send a confirmation email to the user when an order is placed.**
+
+### Local Build
+
+We use `bundler` to manage dependencies. To get started, simply `bundle install`.
+
+### Running locally
+
+You may run this service locally with `bundle exec ruby email_server.rb`.
+
+
+### Dockerfile
 
 ```Dockerfile
 FROM ruby:3.2.2-slim AS base
@@ -306,7 +320,32 @@ ENTRYPOINT ["bundle", "exec", "ruby", "email_server.rb"]
 
 ```
 
-## 🚩 Flagd-UI Service Dockerfile
+### Email Service - Dockerfile Explanation
+
+This Dockerfile builds and runs the **Email** microservice, written in **Ruby**, using a multi-stage Docker build to separate the dependency installation phase from the final runtime image. It starts from a slimmed-down `ruby:3.2.2-slim` base image for both the builder and release stages, ensuring a minimal and efficient container footprint.
+
+In the `builder` stage, the working directory is set to `/tmp`, and the `Gemfile` and `Gemfile.lock` files—required for installing Ruby dependencies—are copied into the container. Instead of using Alpine's `apk` (commented out), it uses `apt-get` to install `build-essential`, which provides compilers and libraries required for native gem extensions. Then, `bundle install` is executed to install all dependencies into the default Ruby bundler path.
+
+The `release` stage begins again from the same slim Ruby base image. The working directory is switched to `/email_server`, and the application code from `./src/email/` is copied over. The `Gemfile.lock` file is given write permissions (`chmod 666`) to avoid permission errors if regenerated. Finally, the installed gems from the builder stage are copied over from `/usr/local/bundle/`.
+
+The container exposes the port defined by the `EMAIL_PORT` environment variable and uses `bundle exec ruby email_server.rb` as the entrypoint, which launches the Ruby-based Email microservice. This multi-stage setup ensures a clean separation of build tools and results in a lightweight, production-optimized runtime image.
+
+
+## 🚩 Flagd-UI Service
+
+### Local development
+
+To run the app locally for development you must copy
+`src/flagd/demo.flagd.json` into `src/flagd-ui/data/demo.flagd.json`
+(create the directory and file if they do not exist yet). Make sure you're in the `src/flagd-ui` directory and run the following command:
+
+```bash
+npm run dev
+```
+
+Then you must navigate to `localhost:4000/feature`.
+
+### Dockerfile
 
 ```Dockerfile
 
@@ -342,7 +381,41 @@ EXPOSE 4000
 CMD ["npm", "start"]
 ```
 
-## 🔍 Fraud Detection Service Dockerfile
+### Flagd UI Service - Dockerfile Explanation
+
+This Dockerfile defines a multi-stage build for the **Flagd UI** service, a web frontend built using **Node.js** and **Next.js**. The goal is to create a lightweight, production-ready image by separating the build and runtime environments.
+
+### Builder Stage (`node:20`)
+The first stage uses the official `node:20` image. It sets the working directory to `/app`, then copies `package.json` and `package-lock.json` from the `./src/flagd-ui/` directory to install the project's dependencies using `npm ci`. This ensures a clean and deterministic install based on the lockfile.
+
+Next, the full project source is copied into the image, and the `npm run build` command compiles the Next.js frontend into production-ready static assets in the `.next/` directory.
+
+### Runtime Stage (`node:20-alpine`)
+The second stage uses the smaller `node:20-alpine` image for production runtime. It sets the same working directory and copies the `package*.json` files again to install only **production** dependencies using `npm ci --only=production`, reducing the image size and attack surface.
+
+After that, it copies selected build artifacts from the `builder` stage:
+- `instrumentation.ts` – likely used for OpenTelemetry instrumentation
+- `next.config.mjs` – Next.js configuration file
+- `.next/` – compiled static build assets
+
+The container exposes port `4000` (used by Next.js apps in production), and the service is started using the command `npm start`, which typically runs `next start`.
+
+This Dockerfile structure ensures efficient builds, clean separation of environments, and a lean production container for serving the Flagd UI.
+
+## 🔍 Fraud Detection Service 
+
+**This service analyses incoming orders and detects malicious customers. This is only mocked and received orders are printed out.**
+
+### Local Build
+
+To build the protos and the service binary, run from the repo root:
+
+```sh
+cp -r ../../pb/ src/main/proto/
+./gradlew shadowJar
+```
+
+### Dockerfile
 
 ```Dockerfile
 FROM --platform=${BUILDPLATFORM} gradle:8-jdk17 AS builder
@@ -366,8 +439,30 @@ ENV JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar
 
 ENTRYPOINT [ "java", "-jar", "fraud-detection-1.0-all.jar" ]
 ```
+### Fraud Detection Service - Dockerfile Explanation
 
-## 🌐 Frontend-Proxy Service Dockerfile
+This Dockerfile sets up the **Fraud Detection** microservice, built using **Java** and **Gradle**, with integrated **OpenTelemetry Java agent** for observability. It uses a multi-stage build to separate the compilation from the final production runtime, resulting in a secure and minimal image.
+
+### Builder Stage (`gradle:8-jdk17`)
+The first stage uses the official `gradle:8-jdk17` image with JDK 17. It sets the working directory to `/usr/src/app/` and copies the service source code from `./src/fraud-detection/`. Additionally, the protobuf definition files from `./pb/` are placed into `./src/main/proto/`, following standard Java/Gradle structure for proto compilation.
+
+Then, it runs `gradle shadowJar`, which compiles the project and packages it into a single executable JAR with all dependencies included (`fraud-detection-1.0-all.jar`). This is necessary for standalone execution in the minimal runtime environment.
+
+### Runtime Stage (`gcr.io/distroless/java17-debian11`)
+The second stage uses the **Distroless Java 17** base image from Google (`distroless/java17-debian11`), which contains only the Java runtime and no package manager or shell, making it extremely secure and small in size.
+
+It sets the working directory and copies the executable JAR from the builder stage. Then, it downloads and adds the **OpenTelemetry Java Agent** dynamically from the GitHub release corresponding to the provided `OTEL_JAVA_AGENT_VERSION` build argument. This agent allows for automatic instrumentation of the Java application for tracing and metrics.
+
+The `JAVA_TOOL_OPTIONS` environment variable is set to enable the OpenTelemetry agent, and the container is launched using the command:
+```bash
+java -jar fraud-detection-1.0-all.jar
+```
+
+## 🌐 Frontend-Proxy Service
+
+**The frontend proxy is used as a reverse proxy for user-facing web interfaces such as the frontend, Jaeger, Grafana, load generator, and feature flag service.**
+
+###  Dockerfile
 
 ```Dockerfile
 FROM envoyproxy/envoy:v1.32-latest
@@ -380,7 +475,40 @@ COPY ./src/frontend-proxy/envoy.tmpl.yaml envoy.tmpl.yaml
 ENTRYPOINT ["/bin/sh", "-c", "envsubst < envoy.tmpl.yaml > envoy.yaml && envoy -c envoy.yaml;"]
 ```
 
-## 🖥️ Frontend Service Dockerfile
+### Frontend-Proxy Service - Dockerfile Explaination
+
+The Frontend Proxy service is a lightweight container built on top of `envoyproxy/envoy:v1.32-latest`. This service acts as a reverse proxy in front of the frontend and other exposed services. It leverages **Envoy** for service routing, observability, and telemetry injection. 
+
+The Dockerfile starts by installing `gettext-base`, which provides the `envsubst` command used to substitute environment variables in the Envoy configuration template at runtime. It switches to the `envoy` user for better container security and sets the working directory to `/home/envoy`. The `envoy.tmpl.yaml` file is copied into the container, which serves as the configuration template.
+
+The `ENTRYPOINT` command runs a shell script that uses `envsubst` to generate the actual `envoy.yaml` from the template using injected environment variables and then starts Envoy with the final configuration. This setup enables dynamic configuration based on the runtime environment and is useful for environments like staging, production, or development where values (like service hostnames or ports) may differ.
+
+This container is designed to be lightweight, secure, and responsive to environment-specific configurations, making it an essential gateway for routing and monitoring traffic across microservices in the OpenTelemetry demo.
+
+## 🖥️ Frontend Service 
+
+**The frontend is responsible to provide a UI for users, as well as an API leveraged by the UI or other clients. The application is based on Next.JS to provide a React web-based UI and API routes.**
+
+### Build Locally
+
+By running `docker compose up` at the root of the project you'll have access to the
+frontend client by going to <http://localhost:8080/>.
+
+### Local development
+
+Currently, the easiest way to run the frontend for local development is to execute
+
+```shell
+docker compose run --service-ports -e NODE_ENV=development --volume $(pwd)/src/frontend:/app --volume $(pwd)/pb:/app/pb --user node --entrypoint sh frontend
+```
+
+from the root folder.
+
+It will start all of the required backend services
+and within the container simply run `npm run dev`.
+After that the app should be available at <http://localhost:8080/>.
+
+### Dockerfile
 
 ```Dockerfile
 
@@ -428,7 +556,23 @@ EXPOSE ${PORT}
 ENTRYPOINT ["npm", "start"]
 ```
 
-## 🖼️ Image-provider Service Dockerfile
+### Frontend Service - Dockerfile Explaination
+
+The Frontend service is a Node.js (Next.js-based) application designed to provide the user interface for the OpenTelemetry demo. The Dockerfile follows a multi-stage build pattern with three stages: `deps`, `builder`, and `runner`.
+
+In the `deps` stage, the base image `node:20-alpine` is used for its small footprint. The `libc6-compat` package is installed for native compatibility with gRPC libraries, and the service dependencies are installed using `npm ci` to ensure clean, reproducible builds.
+
+The `builder` stage also uses the Alpine-based Node image and installs `protobuf-dev` and `protoc`, which are required for compiling `.proto` files used by gRPC. The `pb` folder and frontend source code are copied, followed by gRPC stub generation (`npm run grpc:generate`) and the Next.js build (`npm run build`).
+
+The `runner` stage is the production container. It sets up a non-root user (`nextjs`) for security and installs only the runtime dependencies (`protobuf-dev` and `protoc`). Configuration files (`next.config.js`, `Instrumentation.js`) and assets (public folder, package.json, and built `.next` directory) are copied in. The application runs under the `nextjs` user, exposing port `8080`, and is started using the `npm start` command.
+
+This Dockerfile design ensures a secure, efficient, and portable frontend deployment, fully integrated with OpenTelemetry for observability and gRPC for inter-service communication.
+
+
+## 🖼️ Image-provider Service
+**This service provides the images which are used in the frontend. The images are statically hosted on a NGINX instance. The NGINX server is instrumented with the nginx-otel module.**
+
+### Dockerfile
 
 ```Dockerfile
 FROM nginx:1.27.0-otel
@@ -453,7 +597,23 @@ COPY src/image-provider/nginx.conf.template /nginx.conf.template
 CMD ["/bin/sh" , "-c" , "envsubst '$OTEL_COLLECTOR_HOST $IMAGE_PROVIDER_PORT $OTEL_COLLECTOR_PORT_GRPC $OTEL_SERVICE_NAME' < /nginx.conf.template > /etc/nginx/nginx.conf && cat  /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"]
 ```
 
-## 🧪 Load Generator Service Dockerfile
+### Image Provider Service - Dockerfile Explaination
+
+The Image Provider service is a lightweight NGINX-based static file server that integrates OpenTelemetry for observability. This Dockerfile is based on the `nginx:1.27.0-otel` image, which includes support for the OpenTelemetry NGINX module. In the first step, the system is updated and the `lsb-release` package is installed to help determine the Debian distribution codename for adding the correct NGINX package repository.
+
+Next, the OpenTelemetry NGINX module (`nginx-module-otel`) is installed using the appropriate Debian repo. A directory `/static` is created and populated with static image assets from the `src/image-provider/static` directory, which the NGINX server will serve.
+
+The container exposes the port defined by the `IMAGE_PROVIDER_PORT` environment variable, and `SIGQUIT` is specified as the stop signal for graceful shutdown.
+
+The core of the configuration lies in using a templated `nginx.conf.template` file. At runtime, the `CMD` uses `envsubst` to replace variables such as `$OTEL_COLLECTOR_HOST`, `$IMAGE_PROVIDER_PORT`, `$OTEL_COLLECTOR_PORT_GRPC`, and `$OTEL_SERVICE_NAME` in the template file, dynamically generating a valid NGINX configuration. The final configuration is printed for debug visibility before launching NGINX in the foreground with `daemon off`.
+
+This setup makes the image provider service observability-friendly, lightweight, and production-ready, ideal for serving static content with telemetry integration.
+
+## 🧪 Load Generator Service
+
+**The load generator is based on the Python load testing framework Locust. By default it will simulate users requesting several different routes from the frontend.**
+
+### Dockerfile
 
 ```Dockerfile
 FROM python:3.12-slim-bookworm AS base
@@ -477,7 +637,37 @@ RUN playwright install --with-deps chromium
 ENTRYPOINT ["locust", "--skip-log-setup"]
 ```
 
-## 💳 Payment Service Dockerfile
+### Load Generator Service Dockerfile Explained
+
+This Dockerfile sets up a Load Generator service using Python, Locust, and Playwright to simulate user traffic for testing and observability purposes in a microservices environment.
+
+The process begins with the `python:3.12-slim-bookworm` base image for a minimal and efficient Python environment. A multi-stage build is used to separate the dependency installation and final image creation for better performance and smaller size.
+
+- Apt is updated quietly (`-qq`) to reduce output noise.
+- The `g++` compiler is installed as it is required to build native Python dependencies.
+- All Python dependencies listed in `requirements.txt` (typically including `locust`, `playwright`, and related plugins) are installed into a custom directory `/reqs` to avoid polluting the global environment.
+
+- Sets the working directory to `/usr/src/app/`.
+- Copies the pre-installed Python packages from the builder stage into the global Python path (`/usr/local`) of the final image.
+- Copies essential test files like `locustfile.py` (Locust test script) and `people.json` (sample data) into the container.
+- Sets environment variables:
+  - `LOCUST_PLAYWRIGHT=1` to enable Locust-Playwright integration for browser-based testing.
+  - `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers` to specify where Playwright should install its browser binaries.
+- Installs Chromium browser (and necessary dependencies) required by Playwright.
+- Uses `locust` as the entry point with `--skip-log-setup` to avoid double logging in container logs.
+
+This setup ensures that the Load Generator is browser-capable, lightweight, and observability-ready for stress-testing modern distributed systems using real browser behavior and Locust's load simulation capabilities.
+
+
+## 💳 Payment Service
+
+**This service is responsible to process credit card payments for orders. It will return an error if the credit card is invalid or the payment cannot be processed.**
+
+### Local Build
+
+Copy the `demo.proto` file to this directory and run `npm ci`
+
+### Dockerfile
 
 ```Dockerfile
 FROM node:22-alpine AS build
@@ -504,7 +694,36 @@ EXPOSE ${PAYMENT_PORT}
 ENTRYPOINT [ "npm", "run", "start" ]
 ```
 
-## 🎁 Product Catalog Service Dockerfile
+### Payment Service Dockerfile Explaination
+
+This Dockerfile is used to containerize the Payment microservice, which is built with Node.js and depends on protocol buffers (gRPC communication). It uses a two-stage build to ensure an optimized production-ready image.
+
+The build process starts from the lightweight `node:22-alpine` image. It sets the working directory to `/usr/src/app/` and copies only the `package.json` and `package-lock.json` files from the `src/payment` directory. It installs required native build tools (`python3`, `make`, `g++`) to support the compilation of any native Node.js modules during dependency installation. Then, `npm ci --omit=dev` is run to install only production dependencies.
+
+In the second stage, it uses the same `node:22-alpine` base but drops root privileges by switching to the `node` user for improved container security. It sets the same working directory and the `NODE_ENV=production` environment variable. The `node_modules/` folder is copied over from the build stage with correct ownership to avoid permission issues. Then, it copies the full application source from `src/payment/` and the shared protobuf definition file `demo.proto` for inter-service communication. The container exposes the configured `${PAYMENT_PORT}` and uses `npm run start` as the default command to launch the payment service.
+
+This setup ensures the payment service is lightweight, production-ready, secure, and capable of communicating with other services in a gRPC-enabled microservices architecture.
+
+## 🎁 Product Catalog Service
+
+**This service is responsible to return information about products. The service can be used to get all products, search for specific products, or return details about any single product.**
+
+## Local Build
+
+To build the service binary, run:
+
+```sh
+export PRODUCT_CATALOG_PORT=<any-unique-port>
+go build -o product-catalog . 
+```
+When this service is run the output should be similar to the following
+
+```
+INFO[0000] Loaded 10 products                           
+INFO[0000] Product Catalog gRPC server started on port: 8088 
+```
+
+### Dockerfile
 
 ```Dockerfile
 FROM golang:1.22-alpine AS builder
@@ -540,7 +759,41 @@ ENV PRODUCT_CATALOG_PORT 8088
 ENTRYPOINT [ "./product-catalog" ]
 ```
 
-## 🧾 Quota Service Dockerfile
+### Product Catalog Service Dockerfile Explained
+
+This Dockerfile is designed to build and package the Product Catalog microservice written in Go. It uses a multi-stage build to keep the final image lightweight and optimized for production.
+
+The first stage uses the `golang:1.22-alpine` image as the base for building the Go application. It sets the working directory to `/usr/src/app/`. To speed up builds and reduce redundant downloads, Go build and module caches are mounted using the `--mount=type=cache` flags. The module definition files `go.mod` and `go.sum` are copied in and used to download dependencies via `go mod download`. Then the rest of the source code is copied, and the Go compiler builds the binary with `go build -o product-catalog .`, producing an executable named `product-catalog`.
+
+The final image uses a minimal `alpine` base to ensure a small attack surface and fast startup. It again sets the working directory to `/usr/src/app/` and copies the `products/` directory that contains the static product data required by the service. It also copies the built Go binary from the builder stage. The default `PRODUCT_CATALOG_PORT` is set to `8088` via environment variable, and the entrypoint runs the compiled binary directly.
+
+This structure ensures the service is fast, secure, and lightweight, making it ideal for deployment in containerized microservices environments.
+
+
+## 🧾 Quota Service
+
+**This service is responsible for calculating shipping costs, based on the number of items to be shipped. The quote service is called from Shipping Service via HTTP.**
+
+### Local Build
+
+To build and run the quote service locally:
+
+```sh
+docker build src/quote --target base -t quote
+cd src/quote
+docker run --rm -it -v $(pwd):/var/www -e QUOTE_PORT=8999 -p "8999:8999" quote
+```
+
+Then, send some curl requests:
+
+```sh
+curl --location 'http://localhost:8999/getquote' \
+--header 'Content-Type: application/json' \
+--data '{"numberOfItems":3}'
+```
+
+
+### Dockerfile
 
 ```Dockerfile
 FROM php:8.3-cli AS base
@@ -576,7 +829,92 @@ COPY --from=vendor /tmp/vendor/ ./vendor/
 COPY ./src/quote/ /var/www
 ```
 
-## 📱 React-Native App Service Dockerfile
+### Quote Service Dockerfile Explained
+
+This Dockerfile builds and packages the Quote microservice written in PHP using a multi-stage build. The service runs with PHP 8.3 CLI and includes OpenTelemetry support for observability.
+
+### Base Stage:
+The first stage starts from the official `php:8.3-cli` image and adds the PHP extensions required for this service. It uses the `docker-php-extension-installer` to install important extensions like `opcache` (for performance), `pcntl` (for process control), `protobuf` (for gRPC support), and `opentelemetry` (for tracing). The working directory is set to `/var/www`, and the default command runs the application via `php public/index.php`. It also changes the user to `www-data` for better security and exposes the port defined by the environment variable `QUOTE_PORT`.
+
+### Vendor Stage:
+The second stage uses the `composer:2.7` image to handle PHP dependencies. It copies the `composer.json` file from the quote service's source code and runs a `composer install` with optimized flags to install only the production dependencies (skipping dev packages, scripts, and plugins). The resulting vendor directory is staged for final use.
+
+### Final Stage:
+The final stage is based on the previously defined `base` image. It copies the `vendor/` directory from the vendor stage into `/var/www`, along with the application code from `./src/quote/`. This ensures a clean and production-ready PHP environment that includes all necessary code and dependencies, optimized for containerized deployment.
+
+
+## 📱 React-Native App Service 
+
+This was created using npx create-expo-app@latest. 
+Content was taken from the web app example in src/frontend and modified to work in a React Native environment.
+
+### Building the app Locally
+
+Unlike the other components under src/ which run within containers this
+app must be built and then run on a mobile simulator on your machine or a
+physical device. If this is your first time running a React Native app then in
+order to execute the steps under "Build on your host machine" you will need to
+setup your local environment for Android or iOS development or both following
+[this guide](https://reactnative.dev/docs/set-up-your-environment).
+Alternatively for Android you can instead follow the steps under "Build within a
+container" to leverage a container to build the app's apk for you.
+
+### Build on your host machine
+
+Before building the app you will need to install the dependencies for the app.
+
+```bash
+cd src/react-native-app
+npm install
+```
+
+#### Android: Build and run app
+
+To run on Android, the following command will compile the Android app and deploy
+it to a running Android simulator or connected device. It will also start a
+a server to provide the JS Bundle required by the app.
+
+```bash
+npm run android
+```
+
+#### iOS: Setup dependencies
+
+Before building for iOS you will need to setup the iOS dependency management
+using CocoaPods. This command only needs to be run the first time before
+building the app for iOS.
+
+```bash
+cd ios && pod install && cd ..
+```
+
+#### iOS: Build and run with XCode
+
+To run on iOS you may find it cleanest to build through the XCode IDE. In order
+to start a server to provide the JS Bundle, run the following command (feel free
+to ignore the output commands referring to opening an iOS simulator, we'll do
+that directly through XCode in the next step).
+
+```bash
+npm run start
+```
+
+Then open XCode, open this as an existing project by opening
+`src/react-native-app/ios/react-native-app.xcworkspace` then trigger the build
+by hitting the Play button or from the menu using Product->Run.
+
+#### iOS: Build and run from the command-line
+
+You can build and run the app using the command line with the following
+command. This will compile the iOS app and deploy it to a running iOS simulator
+and start a server to provide the JS Bundle.
+
+```bash
+npm run ios
+```
+
+
+### Dockerfile
 
 ```Dockerfile
 FROM reactnativecommunity/react-native-android:v13.2.1 AS builder
@@ -594,7 +932,28 @@ COPY --from=builder /reactnativesrc/android/app/build/outputs/apk/release/app-re
 ENTRYPOINT ["/reactnativeapp.apk"]
 ```
 
-## 🎯 Recommendation Service Dockerfile
+### React Native Android Build Dockerfile Explaination
+
+This Dockerfile is designed to automate the building of a React Native Android application into an APK using a multi-stage build process. 
+
+It starts from the `reactnativecommunity/react-native-android:v13.2.1` image, which provides all the necessary Android SDKs, NDKs, and build tools required for compiling a React Native project. The working directory is set to `/reactnativesrc/`, where the entire project is copied into the container. The build process begins by installing all required dependencies using `npm install`, followed by moving into the `android/` directory and giving execution permission to the `gradlew` wrapper script. The APK is built using the `./gradlew assembleRelease` command, which compiles the Android app in release mode and generates the APK under the `android/app/build/outputs/apk/release/` directory.
+
+The final stage uses the minimalist `scratch` image to keep the resulting image as lightweight as possible. It copies the built APK file from the builder stage into the image and sets it as the container entrypoint. This allows the image to directly expose the compiled `app-release.apk` at the container level, which can then be extracted or used by downstream CI/CD workflows.
+
+
+## 🤖 Recommendation Service 
+
+**This service is responsible to get a list of recommended products for the user based on existing product IDs the user is browsing.**
+
+### Local Build
+
+To build the protos, run from the root directory:
+
+```sh
+make docker-generate-protobuf
+```
+
+### Dockerfile
 
 ```Dockerfile
 FROM python:3.12-slim-bookworm AS base
@@ -614,7 +973,27 @@ ENV RECOMMENDATION_PORT 1010
 
 ENTRYPOINT ["python", "recommendation_server.py"]
 ```
-## 🚚 Shipping Service Dockerfile
+
+###  Recommendation Service Dockerfile Explaination
+
+This Dockerfile defines a containerized environment for the Recommendation microservice, which is written in Python and instrumented for observability with OpenTelemetry.
+
+The build starts from the official `python:3.12-slim-bookworm` image to ensure a lightweight yet modern Python environment. It sets the working directory to `/usr/src/app` and begins by copying the `requirements.txt` file into the container. After upgrading `pip`, it installs all Python dependencies listed in the requirements file.
+
+Once dependencies are installed, the rest of the application source code is copied into the container. It then runs `opentelemetry-bootstrap -a install`, which scans installed dependencies and installs the relevant OpenTelemetry instrumentation libraries automatically to enable tracing and metrics collection.
+
+An environment variable `RECOMMENDATION_PORT` is defined (defaulting to 1010), which the application uses to determine which port to listen on. Finally, the container is configured to start by running `recommendation_server.py` as the entry point using Python.
+
+## 🚚 Shipping Service 
+
+**This service is responsible for providing shipping information including pricing and tracking information, when requested from Checkout Service.**
+
+### Local Test
+
+```sh
+cargo test
+```
+### Dockerfile
 
 ```Dockerfile
 FROM --platform=${BUILDPLATFORM} rust:1.76 AS builder
@@ -679,6 +1058,12 @@ COPY --from=builder /bin/grpc_health_probe /bin/grpc_health_probe
 EXPOSE ${SHIPPING_PORT}
 ENTRYPOINT ["/app/shipping"]
 ```
+
+### Shipping Service Dockerfile Explaination
+
+This Dockerfile defines a robust multi-architecture build process for the `shipping` microservice written in Rust. The build starts from the official `rust:1.76` image and accepts build-time arguments such as `BUILDPLATFORM`, `TARGETPLATFORM`, and `TARGETARCH` to support cross-compilation. Depending on the target platform (e.g., `linux/arm64`, `linux/amd64`), it installs the necessary cross-compilers and toolchains using `apt-get` and `rustup`. The Dockerfile sets the working directory to `/app/`, copies in the Rust-based shipping source code and shared protobuf definitions, and then builds the project using `cargo build` with the `dockerproto` feature enabled. For cross-compilation, it sets the appropriate compiler environment variables before building and copies the resulting binary to a standard location.
+
+To support health checking in Kubernetes and service meshes, the container also downloads and installs the `grpc_health_probe` binary corresponding to the target architecture. The final production image is based on `debian:bookworm-slim` and contains only the compiled `shipping` binary and the health probe tool. It sets `/app` as the working directory, exposes the `SHIPPING_PORT`, and uses the `shipping` binary as the container entry point. This clean and modular design ensures the service runs efficiently across different platforms while supporting gRPC health checks out of the box.
 
 
 
