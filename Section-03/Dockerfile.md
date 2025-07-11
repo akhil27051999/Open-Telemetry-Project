@@ -133,6 +133,8 @@ The final stage uses the lighter `eclipse-temurin:21-jre` runtime image to packa
 
 ## 🛒 Cart Service 
 
+**This service maintains items placed in the shopping cart by users. It interacts with a Valkey caching service for fast access to shopping cart data.**
+
 ### Local Build
 Run `dotnet restore` and `dotnet build`.
 
@@ -173,7 +175,19 @@ The build process starts with `dotnet restore`, where the `cart.csproj` project 
 
 The second and final stage uses the ultra-lightweight `mcr.microsoft.com/dotnet/runtime-deps:8.0-alpine3.20` image, which only includes the minimum dependencies needed to run a .NET app. This significantly reduces the image size and attack surface. It copies the published build from the previous stage into `/usr/src/app/`, sets an environment variable `DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false` to disable configuration reload-on-change for performance and stability in containers, exposes the service port `${CART_PORT}`, and sets the entrypoint to run the `cart` binary directly. This structure ensures a small, secure, and performance-optimized container ready for production deployment.
 
-## 📦 Checkout Service Dockerfile
+## 📦 Checkout Service
+
+**This service is responsible to process a checkout order from the user. The checkout service will call many other services in order to process an order.**
+
+### Local Build
+
+To build the service binary, run:
+
+```sh
+go build -o /go/bin/checkout/
+```
+
+### Dockerfile
 
 ```Dockerfile
 
@@ -200,7 +214,18 @@ COPY --from=builder /go/bin/checkout/ ./
 EXPOSE ${CHECKOUT_PORT}
 ENTRYPOINT [ "./checkout" ]
 ```
-## 💱 Currency Service Dockerfile
+
+### Checkout Service - Dockerfile Explanation
+
+This Dockerfile uses a multi-stage build process for the **Checkout** microservice, written in Go, optimized for small image size and fast runtime. The first stage is a `builder` stage that uses the official `golang:1.22-alpine` image. It sets the working directory to `/usr/src/app/` and performs module dependency management and binary compilation using advanced `RUN --mount` directives. These `--mount` flags are part of Docker BuildKit and are used here for efficient caching and binding of files during the build process.
+
+The first `RUN` command mounts a cache for downloaded Go modules (`/go/pkg/mod`) and binds the `go.sum` and `go.mod` files from the `./src/checkout/` directory into the container, allowing `go mod download` to fetch the exact dependency versions specified. The second `RUN` command uses additional mounts to cache Go build artifacts and bind the entire application source directory (`./src/checkout`) for compilation. It compiles the application with `go build` and uses linker flags `-s -w` to strip debugging information and reduce the binary size. The final output is placed in `/go/bin/checkout/`.
+
+The second stage uses a minimal `alpine` base image for the final runtime container. It sets the working directory, copies the statically compiled Go binary from the builder stage into the container, and exposes the port defined by the `CHECKOUT_PORT` environment variable. Finally, it defines the entrypoint as `./checkout`, launching the service when the container starts. This build approach ensures a compact, production-grade image with minimal overhead, faster startup, and enhanced security due to the absence of unnecessary build tools and dependencies.
+
+## 💱 Currency Service 
+
+### Dockerfile
 
 ```Dockerfile
 
@@ -237,6 +262,19 @@ EXPOSE ${CURRENCY_PORT}
 ENTRYPOINT ["sh", "-c", "./usr/local/bin/currency ${CURRENCY_PORT}"]
 
 ```
+
+### Currency Service - Dockerfile Explanation
+
+This Dockerfile defines a multi-stage build and runtime process for the **Currency** microservice, implemented in **C++** and instrumented with **OpenTelemetry** for observability. The first stage, labeled `builder`, uses the `alpine:3.18` base image due to its minimal footprint. It installs all necessary build tools and dependencies such as `git`, `cmake`, `make`, `g++`, `grpc-dev`, `protobuf-dev`, and `linux-headers` using `apk`.
+
+An argument `OPENTELEMETRY_CPP_VERSION` is passed to clone a specific version of the [OpenTelemetry C++ SDK](https://github.com/open-telemetry/opentelemetry-cpp). The SDK is cloned with `--depth 1` for shallow cloning to reduce image size and built using `cmake` with flags to enable OTLP (OpenTelemetry Protocol) over gRPC, disable tests and examples, and ensure optimal build configurations. The SDK is installed into the system to be used by the Currency service.
+
+After installing the SDK, the Currency service source code (from `./src/currency`) and its protobuf definition (`demo.proto`) are copied into the image. The Currency service is then built using `cmake` and `make`, producing a binary that's installed into the `/usr/local` directory.
+
+The second stage, named `release`, starts again from a clean `alpine:3.18` image and installs only the essential runtime dependencies (`grpc-dev` and `protobuf-dev`). It copies the compiled binaries and dependencies from the builder stage's `/usr/local` directory into the new runtime image.
+
+The container exposes the port specified by the `CURRENCY_PORT` environment variable and sets the entrypoint to run the `currency` binary using a `sh -c` wrapper, passing in the port dynamically. This separation between build and runtime stages results in a secure, lean, and production-ready image for deploying the C++ Currency microservice with OpenTelemetry integration.
+
 
 ## 📧 Email Service Dockerfile
 
