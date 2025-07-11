@@ -47,13 +47,15 @@ USER app
 
 ENTRYPOINT ["./instrument.sh", "dotnet", "Accounting.dll"]
 ```
-### Explaination
+### Accounting Service - Dockerfile Explanation
 
-- This Dockerfile is a multi-stage build for a .NET 8-based microservice called Accounting, designed for cross-platform containerization and observability using OpenTelemetry. The process begins with a builder stage that uses the official .NET SDK 8.0 image and targets a specific platform using the --platform=${BUILDPLATFORM} flag. It defines build-time arguments such as TARGETARCH for architecture-specific builds (e.g., amd64, arm64) and sets the build configuration to Release by default. The service source code is copied into the container, including the demo.proto file for gRPC or protocol buffer definitions, and dependencies are restored with dotnet restore. The dotnet build command then compiles the project targeting the specified Linux architecture and outputs the intermediate build files to /app/build.
+This Dockerfile is a multi-stage build for a .NET 8-based microservice called **Accounting**, designed for cross-platform containerization and observability using OpenTelemetry. The process begins with a `builder` stage that uses the official `.NET SDK 8.0` image and targets a specific platform using the `--platform=${BUILDPLATFORM}` flag. It defines build-time arguments such as `TARGETARCH` for architecture-specific builds (e.g., `amd64`, `arm64`) and sets the build configuration to `Release` by default. The service source code is copied into the container, including the `demo.proto` file for gRPC or protocol buffer definitions, and dependencies are restored with `dotnet restore`. The `dotnet build` command then compiles the project targeting the specified Linux architecture and outputs the intermediate build files to `/app/build`.
+
+The second stage, named `publish`, uses the previously built artifacts to publish the final optimized output using `dotnet publish`. This command produces a trimmed deployment package inside `/app/publish`, with the `UseAppHost=false` flag to avoid platform-specific executable overhead, which keeps the image size smaller.
+
+The final stage uses the lightweight `mcr.microsoft.com/dotnet/aspnet:8.0` base runtime image to run the service. It switches to a non-root user (`app`) for security best practices, sets the working directory to `/app`, and copies the published output from the previous stage. It then briefly switches to the root user to create and set ownership on a log directory (`/var/log/opentelemetry/dotnet`) and the instrumentation script (`instrument.sh`) so that the `app` user can access them. Finally, the container reverts to the non-root user and uses the `instrument.sh` script as its entrypoint, wrapping the service launch command `dotnet Accounting.dll`. This design ensures that the application is built efficiently, runs securely, and is ready for observability through OpenTelemetry instrumentation.
+
   
-- The second stage, named publish, uses the previously built artifacts to publish the final optimized output using dotnet publish. This command produces a trimmed deployment package inside /app/publish, with the UseAppHost=false flag to avoid platform-specific executable overhead, which keeps the image size smaller.
-  
-- The final stage uses the lightweight mcr.microsoft.com/dotnet/aspnet:8.0 base runtime image to run the service. It switches to a non-root user (app) for security best practices, sets the working directory to /app, and copies the published output from the previous stage. It then briefly switches to the root user to create and set ownership on a log directory (/var/log/opentelemetry/dotnet) and the instrumentation script (instrument.sh) so that the app user can access them. Finally, the container reverts to the non-root user and uses the instrument.sh script as its entrypoint, wrapping the service launch command dotnet Accounting.dll. This design ensures that the application is built efficiently, runs securely, and is ready for observability through OpenTelemetry instrumentation.
 ## 📢 Ad Service Dockerfile
 
 ```Dockerfile
@@ -85,6 +87,13 @@ ENV AD_PORT 9099
 
 ENTRYPOINT ["./build/install/opentelemetry-demo-ad/bin/Ad"]
 ```
+### Ad Service - Dockerfile Explanation
+
+This Dockerfile defines a multi-stage build process for a Java-based microservice (in this case, likely the **Ad** service) using the **Eclipse Temurin JDK and JRE 21** as the base images. The first stage, labeled `builder`, uses the full JDK image (`eclipse-temurin:21-jdk`) to compile and assemble the application. It sets the working directory to `/usr/src/app/` and copies essential Gradle build files like `gradlew`, `settings.gradle`, and `build.gradle`, along with the `.gradle` directory. It ensures the Gradle wrapper (`gradlew`) is executable, then runs initial Gradle commands including `./gradlew` to bootstrap the project and `./gradlew downloadRepos` to pre-download all required dependencies, which improves build performance and repeatability.
+
+Next, the source code is copied into the container, including the protocol buffer files (`./pb`) mapped to a directory named `./proto`. After reapplying executable permissions to `gradlew`, it runs the command `./gradlew installDist -PprotoSourceDir=./proto`, which compiles the Java application, processes the protobuf files, and installs a distributable version of the application to the `build/install` directory using the `installDist` Gradle plugin. The use of `-PprotoSourceDir` suggests the app supports protocol buffer-based gRPC or messaging interfaces.
+
+The final stage uses the lighter `eclipse-temurin:21-jre` runtime image to package and run the application without the overhead of the JDK. It sets the same working directory and copies all build artifacts from the `builder` stage. It also sets an environment variable `AD_PORT` with a default value of `9099`, which is likely the internal port the Ad service listens on. Finally, it defines the entrypoint using the shell script produced by the Gradle distribution install: `./build/install/opentelemetry-demo-ad/bin/Ad`. This script launches the service using the precompiled and properly structured Java application. This multi-stage approach ensures a clean separation between build-time and runtime dependencies, resulting in a smaller, production-ready image with all necessary application logic and protobuf integrations baked in.
 
 ## 🛒 Cart Service Dockerfile
 
