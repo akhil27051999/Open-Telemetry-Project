@@ -165,7 +165,7 @@ EXPOSE ${CART_PORT}
 ENTRYPOINT [ "./cart" ]
 ```
 
-# Cart Service - Dockerfile Explanation
+### Cart Service - Dockerfile Explanation
 
 This Dockerfile is a multi-stage build setup designed for the **Cart** microservice, written in .NET 8 and optimized for lightweight Alpine-based deployment. The first stage, named `builder`, uses the full .NET SDK image (`mcr.microsoft.com/dotnet/sdk:8.0`) with platform awareness via the `--platform=$BUILDPLATFORM` directive. It accepts a build-time argument `TARGETARCH` to ensure architecture-specific builds (such as `amd64` or `arm64`). The working directory is set to `/usr/src/app/`, and source files from the `src/cart` directory and protobuf definitions from the `pb` directory are copied into the container.
 
