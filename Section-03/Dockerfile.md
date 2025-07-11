@@ -833,13 +833,10 @@ COPY ./src/quote/ /var/www
 
 This Dockerfile builds and packages the Quote microservice written in PHP using a multi-stage build. The service runs with PHP 8.3 CLI and includes OpenTelemetry support for observability.
 
-### Base Stage:
 The first stage starts from the official `php:8.3-cli` image and adds the PHP extensions required for this service. It uses the `docker-php-extension-installer` to install important extensions like `opcache` (for performance), `pcntl` (for process control), `protobuf` (for gRPC support), and `opentelemetry` (for tracing). The working directory is set to `/var/www`, and the default command runs the application via `php public/index.php`. It also changes the user to `www-data` for better security and exposes the port defined by the environment variable `QUOTE_PORT`.
 
-### Vendor Stage:
 The second stage uses the `composer:2.7` image to handle PHP dependencies. It copies the `composer.json` file from the quote service's source code and runs a `composer install` with optimized flags to install only the production dependencies (skipping dev packages, scripts, and plugins). The resulting vendor directory is staged for final use.
 
-### Final Stage:
 The final stage is based on the previously defined `base` image. It copies the `vendor/` directory from the vendor stage into `/var/www`, along with the application code from `./src/quote/`. This ensures a clean and production-ready PHP environment that includes all necessary code and dependencies, optimized for containerized deployment.
 
 
