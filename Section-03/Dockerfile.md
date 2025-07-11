@@ -385,12 +385,10 @@ CMD ["npm", "start"]
 
 This Dockerfile defines a multi-stage build for the **Flagd UI** service, a web frontend built using **Node.js** and **Next.js**. The goal is to create a lightweight, production-ready image by separating the build and runtime environments.
 
-### Builder Stage (`node:20`)
 The first stage uses the official `node:20` image. It sets the working directory to `/app`, then copies `package.json` and `package-lock.json` from the `./src/flagd-ui/` directory to install the project's dependencies using `npm ci`. This ensures a clean and deterministic install based on the lockfile.
 
 Next, the full project source is copied into the image, and the `npm run build` command compiles the Next.js frontend into production-ready static assets in the `.next/` directory.
 
-### Runtime Stage (`node:20-alpine`)
 The second stage uses the smaller `node:20-alpine` image for production runtime. It sets the same working directory and copies the `package*.json` files again to install only **production** dependencies using `npm ci --only=production`, reducing the image size and attack surface.
 
 After that, it copies selected build artifacts from the `builder` stage:
@@ -443,12 +441,10 @@ ENTRYPOINT [ "java", "-jar", "fraud-detection-1.0-all.jar" ]
 
 This Dockerfile sets up the **Fraud Detection** microservice, built using **Java** and **Gradle**, with integrated **OpenTelemetry Java agent** for observability. It uses a multi-stage build to separate the compilation from the final production runtime, resulting in a secure and minimal image.
 
-### Builder Stage (`gradle:8-jdk17`)
 The first stage uses the official `gradle:8-jdk17` image with JDK 17. It sets the working directory to `/usr/src/app/` and copies the service source code from `./src/fraud-detection/`. Additionally, the protobuf definition files from `./pb/` are placed into `./src/main/proto/`, following standard Java/Gradle structure for proto compilation.
 
 Then, it runs `gradle shadowJar`, which compiles the project and packages it into a single executable JAR with all dependencies included (`fraud-detection-1.0-all.jar`). This is necessary for standalone execution in the minimal runtime environment.
 
-### Runtime Stage (`gcr.io/distroless/java17-debian11`)
 The second stage uses the **Distroless Java 17** base image from Google (`distroless/java17-debian11`), which contains only the Java runtime and no package manager or shell, making it extremely secure and small in size.
 
 It sets the working directory and copies the executable JAR from the builder stage. Then, it downloads and adds the **OpenTelemetry Java Agent** dynamically from the GitHub release corresponding to the provided `OTEL_JAVA_AGENT_VERSION` build argument. This agent allows for automatic instrumentation of the Java application for tracing and metrics.
