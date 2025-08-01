@@ -76,5 +76,32 @@ sudo apt-get install terraform
 ```
 terraform -help
 ```
+# 4. AWS CLI Installation Guide
+
+### Installation Methods
+
+#### Linux
+```
+Download and run the installation script:
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+Verify installation:
+aws --version
+```
+
+### Configuration
+
+#### After installation, configure AWS CLI:
+
+```
+aws configure
+```
+You'll need to provide:
+
+- AWS Access Key ID
+- AWS Secret Access Key
+- Default region name
+- Default output format
 
 **Note: If you are planning to install Docker, Kubernetes, Terraform on any other distributions of linux or other operating systems like Windows, please follow the official documentation for steps.**
