@@ -11,8 +11,6 @@ Before you begin, ensure you have the following installed and configured:
 - Appropriate AWS IAM permissions for ECR (e.g., `AmazonEC2ContainerRegistryFullAccess`)
 - An AWS account and your AWS Account ID
 
----
-
 ## Installation & Setup
 
 #### 1. Authenticate Docker to Amazon ECR
